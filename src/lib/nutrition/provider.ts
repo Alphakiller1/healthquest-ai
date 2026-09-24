@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { dataDir } from "@/lib/demo/data-dir";
 import { DEMO_FOODS, searchDemoFoods } from "./catalog";
 import { consumeUsdaRequest, usdaHourlyLimit, type UsdaWindow } from "./rate-limit";
 import {
@@ -44,7 +45,7 @@ export function getNutritionProvider():
   return { ok: true, provider: createUsdaNutritionProvider(process.env.USDA_FOODDATA_API_KEY!) };
 }
 
-const cachePath = resolve(process.cwd(), ".data/usda-cache.json");
+const cachePath = resolve(dataDir(), "usda-cache.json");
 
 function readUsdaCache(): Record<string, NutritionFood> {
   try {

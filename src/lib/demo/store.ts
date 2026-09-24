@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { dataDir } from "@/lib/demo/data-dir";
 import {
   appendXpEvent,
   type GamificationEvent,
@@ -190,7 +191,7 @@ export function createMemoryStore(initial: Database = emptyDb()): DemoStore {
   return createStore(() => db, () => undefined);
 }
 
-export function createFileStore(filePath = resolve(process.cwd(), ".data/demo-store.json")): DemoStore {
+export function createFileStore(filePath = resolve(dataDir(), "demo-store.json")): DemoStore {
   const load = (): Database => {
     try {
       return normalize(JSON.parse(readFileSync(filePath, "utf8")) as Partial<Database>);

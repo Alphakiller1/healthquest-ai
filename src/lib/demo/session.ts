@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
 export type DemoSession = {
@@ -11,7 +11,8 @@ const COOKIE = "hq_demo";
 
 function secret(): string {
   if (process.env.NODE_ENV === "production") {
-    throw new Error("Demo sessions are disabled in production.");
+    if (!testerModeEnabled()) throw new Error("Demo sessions are disabled in production.");
+    return process.env.TESTER_SESSION_SECRET as string;
   }
   return process.env.DEMO_SESSION_SECRET ?? "dev-only-healthquest-demo-secret";
 }
@@ -39,7 +40,7 @@ export function decodeSession(value: string | undefined): DemoSession | null {
 }
 
 export async function readSession(): Promise<DemoSession | null> {
-  if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  if (process.env.NODE_ENV === "production" && !testerModeEnabled()) {
     return null;
   }
   if (process.env.NEXT_PUBLIC_SUPABASE_URL) return null;
@@ -64,4 +65,26 @@ export async function clearSession(): Promise<void> {
 
 export function demoModeEnabled(): boolean {
   return process.env.NODE_ENV !== "production" && !process.env.NEXT_PUBLIC_SUPABASE_URL;
+}
+
+/**
+ * Tester sign-in for a deployed build before email sign-in exists. Off unless
+ * both secrets are set in the environment, and always off once Supabase is
+ * configured. Data lives in temporary storage and can reset.
+ */
+export function testerModeEnabled(): boolean {
+  return (
+    process.env.NODE_ENV === "production" &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    (process.env.TESTER_ACCESS_CODE?.length ?? 0) >= 16 &&
+    (process.env.TESTER_SESSION_SECRET?.length ?? 0) >= 32
+  );
+}
+
+/** Constant-time comparison of a submitted code against TESTER_ACCESS_CODE. */
+export function testerCodeMatches(submitted: string): boolean {
+  const expected = process.env.TESTER_ACCESS_CODE;
+  if (!expected) return false;
+  const digest = (value: string) => createHash("sha256").update(value).digest();
+  return timingSafeEqual(digest(submitted.trim()), digest(expected));
 }

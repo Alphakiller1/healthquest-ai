@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { demoModeEnabled, writeSession } from "@/lib/demo/session";
+import { demoModeEnabled, testerCodeMatches, testerModeEnabled, writeSession } from "@/lib/demo/session";
 import { getDemoStore } from "@/lib/demo/store";
 import { getPublicSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -25,7 +25,13 @@ export async function signIn(formData: FormData) {
     redirect(error ? "/login?error=send" : "/login?sent=1");
   }
 
-  if (!demoModeEnabled()) {
+  if (testerModeEnabled()) {
+    if (!testerCodeMatches(String(formData.get("accessCode") ?? ""))) {
+      // A short pause makes guessing slower; the code itself is long and random.
+      await new Promise((done) => setTimeout(done, 750));
+      redirect("/login?error=code");
+    }
+  } else if (!demoModeEnabled()) {
     redirect("/login?error=config");
   }
 

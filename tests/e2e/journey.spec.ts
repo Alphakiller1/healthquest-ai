@@ -5,19 +5,23 @@ test("adult can onboard, log, learn, export, see an emergency screen, and delete
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: "Continue in demo" }).click();
-  await expect(page.getByRole("heading", { name: "Set up your HealthQuest" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "First, when were you born?" })).toBeVisible();
 
+  // Onboarding asks one question per screen.
   await page.getByLabel("Birth date").fill("1990-01-15");
+  await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("checkbox", { name: "Understand how meals fit what I want to learn" }).check();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("checkbox", { name: /third-party AI provider/ }).check();
   await page.getByRole("checkbox", { name: /store the health and wellness/ }).check();
   await page.getByRole("checkbox", { name: /privacy commitment/ }).check();
   await page.getByRole("checkbox", { name: /not medical advice/ }).check();
-  await page.getByRole("button", { name: "Finish setup" }).click();
-  await expect(page.getByRole("heading", { name: "Your HealthQuest" })).toBeVisible();
-  await expect(page.getByText(/not that you are healthier/)).toBeVisible();
+  await page.getByRole("button", { name: "Begin my HealthQuest" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening)/ })).toBeVisible();
+  await expect(page.getByRole("list", { name: /This week/ })).toBeVisible();
 
-  await page.getByRole("link", { name: "Log a meal" }).click();
+  await page.goto("/journal");
   await page.getByRole("textbox", { name: "Food", exact: true }).fill("rolled oats");
   await page.getByRole("button", { name: "Find nutrition match" }).click();
   await expect(
@@ -43,7 +47,7 @@ test("adult can onboard, log, learn, export, see an emergency screen, and delete
   await expect(page.getByRole("link", { name: /FDA/ })).toBeVisible();
 
   await page.goto("/quests");
-  await expect(page.getByText("Lesson finished").first()).toBeVisible();
+  await expect(page.getByText("Completed this week").first()).toBeVisible();
 
   await page.goto("/settings");
   await page.getByRole("checkbox", { name: /Plain language/ }).check();
