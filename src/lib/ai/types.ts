@@ -4,6 +4,7 @@ export type SafeFoodContext = {
   description: string;
   nutrients?: Record<string, number | null>;
   nutrientStatus?: "matched" | "uncertain";
+  demoNutrition?: boolean;
 };
 
 /** Fields the model is allowed to see. Identity and contact data are excluded. */

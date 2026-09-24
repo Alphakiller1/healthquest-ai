@@ -50,7 +50,12 @@ export async function runAssistantPipeline(
   let providerCalled = false;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     providerCalled = true;
-    const generated = await provider.generate(input);
+    let generated;
+    try {
+      generated = await provider.generate(input);
+    } catch {
+      continue;
+    }
     const validated = validateAssistantResponse(generated, knownSourceIds);
     if (validated.ok) {
       if (
