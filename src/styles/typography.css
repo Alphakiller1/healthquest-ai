@@ -1,0 +1,102 @@
+/*
+ * Two families, each with one job.
+ * Hanken Grotesk: every interface word and number.
+ * Newsreader: moments of voice — the greeting, lesson reading, the assistant's plain answer.
+ * Weight does the hierarchy work; bold is rare.
+ */
+
+:root {
+  --hq-font-sans: var(--font-hq-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --hq-font-serif: var(--font-hq-serif), ui-serif, Georgia, "Times New Roman", serif;
+
+  --hq-text-display: clamp(1.875rem, 1.5rem + 1.6vw, 2.5rem);
+  --hq-text-title: 1.5rem;
+  --hq-text-section: 1.0625rem;
+  --hq-text-body: 1rem;
+  --hq-text-reading: 1.1875rem;
+  --hq-text-secondary-size: 0.9375rem;
+  --hq-text-label: 0.8125rem;
+  --hq-text-micro: 0.75rem;
+  --hq-text-numeric-lg: 1.75rem;
+
+  --hq-leading-tight: 1.15;
+  --hq-leading-snug: 1.3;
+  --hq-leading-body: 1.55;
+  --hq-leading-reading: 1.65;
+
+  --hq-weight-regular: 400;
+  --hq-weight-medium: 500;
+  --hq-weight-semibold: 600;
+  --hq-weight-bold: 700;
+}
+
+.hq-display {
+  font-family: var(--hq-font-serif);
+  font-size: var(--hq-text-display);
+  font-weight: var(--hq-weight-regular);
+  line-height: var(--hq-leading-tight);
+  letter-spacing: -0.015em;
+  font-optical-sizing: auto;
+  text-wrap: balance;
+}
+
+.hq-title {
+  font-size: var(--hq-text-title);
+  font-weight: var(--hq-weight-semibold);
+  line-height: var(--hq-leading-snug);
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+.hq-section-title {
+  font-size: var(--hq-text-section);
+  font-weight: var(--hq-weight-semibold);
+  line-height: var(--hq-leading-snug);
+  letter-spacing: -0.005em;
+}
+
+.hq-body {
+  font-size: var(--hq-text-body);
+  line-height: var(--hq-leading-body);
+}
+
+.hq-reading {
+  font-family: var(--hq-font-serif);
+  font-size: var(--hq-text-reading);
+  line-height: var(--hq-leading-reading);
+  font-optical-sizing: auto;
+  text-wrap: pretty;
+  max-width: 34em;
+}
+
+.hq-secondary {
+  font-size: var(--hq-text-secondary-size);
+  line-height: var(--hq-leading-body);
+  color: var(--hq-text-secondary);
+}
+
+.hq-label {
+  font-size: var(--hq-text-label);
+  font-weight: var(--hq-weight-medium);
+  line-height: 1.35;
+  color: var(--hq-text-muted);
+}
+
+.hq-micro {
+  font-size: var(--hq-text-micro);
+  line-height: 1.35;
+  color: var(--hq-text-muted);
+}
+
+.hq-numeric {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+.hq-numeric-lg {
+  font-size: var(--hq-text-numeric-lg);
+  font-weight: var(--hq-weight-semibold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+}

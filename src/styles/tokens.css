@@ -1,0 +1,213 @@
+/*
+ * HealthQuest design tokens.
+ * Components read semantic tokens only. Raw values live here and nowhere else.
+ * Light is the default; dark applies from the OS unless the person picks a theme
+ * (data-theme on <html>, or on any subtree for previews).
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Canvas and surfaces: warm paper, never sterile white */
+  --hq-bg-canvas: #f4f1e9;
+  --hq-bg-surface: #fbf9f4;
+  --hq-bg-raised: #ffffff;
+  --hq-bg-soft: #ece8dd;
+  --hq-bg-interactive: #e6e1d4;
+  --hq-bg-inverse: #1b2420;
+
+  --hq-line: #e0d9ca;
+  --hq-line-strong: #c9c0ad;
+
+  /* Ink: green-black, never pure black */
+  --hq-text-primary: #1b2420;
+  --hq-text-secondary: #46514b;
+  --hq-text-muted: #5b645d;
+  --hq-text-inverse: #f4f1e9;
+
+  /* Brand: fern — fresh, not clinical, not neon */
+  --hq-brand: #2b7a55;
+  --hq-brand-strong: #1f6344;
+  --hq-brand-ink: #1c5a3e;
+  --hq-brand-soft: #dcecdf;
+  --hq-brand-glow: #8fd3aa;
+  --hq-on-brand: #ffffff;
+
+  /* Sun: warmth for learning, sparks, milestones */
+  --hq-sun: #e7a032;
+  --hq-sun-ink: #7f540c;
+  --hq-sun-soft: #f6e8cb;
+
+  /* States. Red is reserved for real safety and destructive actions. */
+  --hq-positive: var(--hq-brand);
+  --hq-positive-soft: var(--hq-brand-soft);
+  --hq-info: #3a6586;
+  --hq-info-soft: #e0e9f0;
+  --hq-caution: #7c5a06;
+  --hq-caution-soft: #f4ead0;
+  --hq-emergency: #b3261e;
+  --hq-emergency-strong: #a3221b;
+  --hq-emergency-soft: #fbe9e6;
+  --hq-emergency-ink: #6f1611;
+
+  --hq-focus: #2f6fb0;
+
+  /* Achievement tiers: participation, never a health grade */
+  --hq-tier-bronze: #a8653a;
+  --hq-tier-silver: #7f8a8f;
+  --hq-tier-gold: #b8860b;
+  --hq-tier-platinum: #4f8a8b;
+  --hq-tier-diamond: #4b6cb7;
+
+  /* Spacing: 4px base */
+  --hq-space-0: 0;
+  --hq-space-1: 0.25rem;
+  --hq-space-2: 0.5rem;
+  --hq-space-3: 0.75rem;
+  --hq-space-4: 1rem;
+  --hq-space-5: 1.25rem;
+  --hq-space-6: 1.5rem;
+  --hq-space-8: 2rem;
+  --hq-space-10: 2.5rem;
+  --hq-space-12: 3rem;
+  --hq-space-16: 4rem;
+
+  /* Radius: restrained. Pills are for chips only. */
+  --hq-radius-xs: 4px;
+  --hq-radius-sm: 6px;
+  --hq-radius-md: 10px;
+  --hq-radius-lg: 16px;
+  --hq-radius-round: 999px;
+
+  /* Elevation: borders and tone do most of the work */
+  --hq-shadow-low: 0 1px 0 rgb(27 36 32 / 0.04), 0 1px 2px rgb(27 36 32 / 0.06);
+  --hq-shadow-medium: 0 2px 4px rgb(27 36 32 / 0.05), 0 8px 24px rgb(27 36 32 / 0.08);
+  --hq-shadow-high: 0 12px 40px rgb(27 36 32 / 0.16);
+
+  /* Hit targets */
+  --hq-target: 44px;
+  --hq-target-lg: 48px;
+
+  /* Layout */
+  --hq-content: 40rem;
+  --hq-content-wide: 68rem;
+  --hq-sidebar: 15rem;
+  --hq-gutter: 1rem;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --hq-gutter: 1.5rem;
+  }
+}
+
+/* Dark: botanical charcoal, warm ink, softened accents */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --hq-bg-canvas: #111714;
+    --hq-bg-surface: #171f1b;
+    --hq-bg-raised: #1e2722;
+    --hq-bg-soft: #1a221e;
+    --hq-bg-interactive: #26312b;
+    --hq-bg-inverse: #ece8df;
+    --hq-line: #29332e;
+    --hq-line-strong: #3a4640;
+    --hq-text-primary: #ebe7de;
+    --hq-text-secondary: #bdc2b9;
+    --hq-text-muted: #969d94;
+    --hq-text-inverse: #111714;
+    --hq-brand: #6cc493;
+    --hq-brand-strong: #6cc493;
+    --hq-brand-ink: #8fd6ad;
+    --hq-brand-soft: #1d3428;
+    --hq-brand-glow: #3f8a60;
+    --hq-on-brand: #0d1a13;
+    --hq-sun: #f0b458;
+    --hq-sun-ink: #f1c77f;
+    --hq-sun-soft: #352a15;
+    --hq-info: #93b8d8;
+    --hq-info-soft: #1b2833;
+    --hq-caution: #e3c36b;
+    --hq-caution-soft: #312a14;
+    --hq-emergency: #f08b7f;
+    --hq-emergency-strong: #c93a2e;
+    --hq-emergency-soft: #36191580;
+    --hq-emergency-ink: #fbd3cd;
+    --hq-focus: #8cbcf0;
+    --hq-tier-bronze: #d08f62;
+    --hq-tier-silver: #aab4b8;
+    --hq-tier-gold: #e0b44a;
+    --hq-tier-platinum: #7fc0c0;
+    --hq-tier-diamond: #8aa6ec;
+    --hq-shadow-low: 0 1px 0 rgb(0 0 0 / 0.2);
+    --hq-shadow-medium: 0 8px 24px rgb(0 0 0 / 0.35);
+    --hq-shadow-high: 0 16px 48px rgb(0 0 0 / 0.5);
+  }
+}
+
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  color-scheme: dark;
+  --hq-bg-canvas: #111714;
+  --hq-bg-surface: #171f1b;
+  --hq-bg-raised: #1e2722;
+  --hq-bg-soft: #1a221e;
+  --hq-bg-interactive: #26312b;
+  --hq-bg-inverse: #ece8df;
+  --hq-line: #29332e;
+  --hq-line-strong: #3a4640;
+  --hq-text-primary: #ebe7de;
+  --hq-text-secondary: #bdc2b9;
+  --hq-text-muted: #969d94;
+  --hq-text-inverse: #111714;
+  --hq-brand: #6cc493;
+  --hq-brand-strong: #6cc493;
+  --hq-brand-ink: #8fd6ad;
+  --hq-brand-soft: #1d3428;
+  --hq-brand-glow: #3f8a60;
+  --hq-on-brand: #0d1a13;
+  --hq-sun: #f0b458;
+  --hq-sun-ink: #f1c77f;
+  --hq-sun-soft: #352a15;
+  --hq-info: #93b8d8;
+  --hq-info-soft: #1b2833;
+  --hq-caution: #e3c36b;
+  --hq-caution-soft: #312a14;
+  --hq-emergency: #f08b7f;
+  --hq-emergency-strong: #c93a2e;
+  --hq-emergency-soft: #36191580;
+  --hq-emergency-ink: #fbd3cd;
+  --hq-focus: #8cbcf0;
+  --hq-tier-bronze: #d08f62;
+  --hq-tier-silver: #aab4b8;
+  --hq-tier-gold: #e0b44a;
+  --hq-tier-platinum: #7fc0c0;
+  --hq-tier-diamond: #8aa6ec;
+  --hq-shadow-low: 0 1px 0 rgb(0 0 0 / 0.2);
+  --hq-shadow-medium: 0 8px 24px rgb(0 0 0 / 0.35);
+  --hq-shadow-high: 0 16px 48px rgb(0 0 0 / 0.5);
+}
+
+:root[data-theme="light"],
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* High contrast: stronger lines and ink, from the OS or the Settings toggle (.hq-contrast on <html>) */
+@media (prefers-contrast: more) {
+  :root {
+    --hq-line: var(--hq-line-strong);
+    --hq-text-secondary: var(--hq-text-primary);
+    --hq-text-muted: var(--hq-text-secondary);
+  }
+}
+
+:root[data-contrast="more"],
+.hq-contrast {
+  --hq-bg-canvas: var(--hq-bg-raised);
+  --hq-line-strong: var(--hq-text-muted);
+  --hq-line: var(--hq-line-strong);
+  --hq-text-secondary: var(--hq-text-primary);
+  --hq-text-muted: var(--hq-text-secondary);
+}

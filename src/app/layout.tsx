@@ -1,15 +1,20 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Hanken_Grotesk, Newsreader } from "next/font/google";
+import { HQAppShell } from "@/components/hq/shell";
+import { PREFERENCES_BOOT_SCRIPT } from "@/components/hq/preferences";
+import { readSession } from "@/lib/demo/session";
+import { getDemoStore } from "@/lib/demo/store";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const sans = Hanken_Grotesk({
+  variable: "--font-hq-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const serif = Newsreader({
+  variable: "--font-hq-serif",
   subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -18,13 +23,31 @@ export const metadata: Metadata = {
     "Educational wellness guidance for adults. Not medical advice, diagnosis, or treatment.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f1e9" },
+    { media: "(prefers-color-scheme: dark)", color: "#111714" },
+  ],
+};
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await readSession();
+  const user = session ? getDemoStore().getUser(session.userId) : null;
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sans.variable} ${serif.variable}${user?.highContrast ? " hq-contrast" : ""}`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: PREFERENCES_BOOT_SCRIPT }} />
+      </head>
+      <body>
+        <a href="#content" className="hq-skip-link">
+          Skip to content
+        </a>
+        <HQAppShell>{children}</HQAppShell>
+      </body>
     </html>
   );
 }

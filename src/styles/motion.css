@@ -1,0 +1,99 @@
+/*
+ * Motion confirms, reveals, and shows progress. It never decorates.
+ * Nothing loops except the loader, and reduced motion turns every
+ * movement into a short fade.
+ */
+
+:root {
+  --hq-motion-fast: 120ms;
+  --hq-motion-normal: 220ms;
+  --hq-motion-slow: 420ms;
+  --hq-motion-reveal: 640ms;
+
+  --hq-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --hq-ease-in-out: cubic-bezier(0.45, 0, 0.25, 1);
+  /* A soft spring: small overshoot, settles fast */
+  --hq-ease-spring: linear(
+    0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017 19.4%,
+    1.061 22.2%, 1.077 25.2%, 1.066 29.1%, 1.018 36.8%, 0.996 43.3%, 1.001 60%, 1
+  );
+}
+
+@keyframes hq-press-confirm {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+
+@keyframes hq-rise-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hq-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hq-node-arrive {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes hq-halo {
+  0% { transform: scale(0.6); opacity: 0.55; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+@keyframes hq-spark-reveal {
+  0% { transform: scale(0.3) rotate(-30deg); opacity: 0; }
+  55% { transform: scale(1.15) rotate(6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+
+@keyframes hq-draw {
+  from { stroke-dashoffset: var(--hq-draw-length, 100); }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes hq-trail {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+@keyframes hq-shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+
+@keyframes hq-particle {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+.hq-rise-in {
+  animation: hq-rise-in var(--hq-motion-slow) var(--hq-ease-out) both;
+  animation-delay: var(--hq-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}

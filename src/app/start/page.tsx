@@ -10,9 +10,9 @@ export default function StartPage() {
         wellness goals, and consent before any health details.
       </p>
       <p className="leading-7 text-zinc-700 dark:text-zinc-300">
-        Sign-in needs a Supabase project. Until those environment variables are
-        set, this screen stays informational so the app does not pretend an
-        account was created.
+        <Link href="/login" className="text-teal-800 underline">
+          Continue to sign-in
+        </Link>
       </p>
       <Link href="/" className="text-teal-800 underline dark:text-teal-300">
         Back to the overview

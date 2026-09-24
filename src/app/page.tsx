@@ -18,7 +18,7 @@ export default function Home() {
       </div>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Link
-          href="/start"
+          href="/login"
           className="inline-flex h-12 items-center justify-center rounded-full bg-teal-800 px-5 text-white"
         >
           Start Your HealthQuest
@@ -44,6 +44,12 @@ export default function Home() {
           <p className="mt-2 leading-7 text-zinc-700 dark:text-zinc-300">
             It does not diagnose, prescribe, interpret medications, or replace
             a physician, dietitian, pharmacist, or therapist.
+          </p>
+        </article>
+        <article>
+          <h2 className="text-lg font-semibold">Affordability</h2>
+          <p className="mt-2 leading-7 text-zinc-700 dark:text-zinc-300">
+            Lessons point at ordinary foods such as beans, oats, and frozen vegetables. You can write an approximate cost. HealthQuest does not look up store prices.
           </p>
         </article>
         <article>
