@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/blob-report
 
 # next.js
 /.next/
@@ -19,6 +22,9 @@
 
 # production
 /build
+
+# local demo data
+/.data
 
 # misc
 .DS_Store

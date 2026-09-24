@@ -10,7 +10,7 @@ Age under 18 stops onboarding before further health questions.
 
 OpenAI API data is not used to train models unless the organization opts in (OpenAI data controls, reviewed 2026-09-24). Abuse-monitoring logs may keep content up to 30 days. Zero Data Retention is not approved and is not active. Call the Responses or Chat Completions API with `store: false`. Do not use Assistants or Threads.
 
-Export and account deletion are required before calling the product complete. They are not implemented in Phase 0.
+Settings can export the local account as JSON and delete it. Deletion removes meals, movement, habits, lessons, points, and the count of education explanations. Sentry stays off until a scrubber exists; operational logs must not include meal text or prompts.
 
 The service role key is read only from `SUPABASE_SERVICE_ROLE_KEY` and is rejected if it is copied into the public anon key. Browser client code does not reference it.
 

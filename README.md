@@ -4,9 +4,7 @@ Educational wellness app for adults in the United States. It explains food, move
 
 ## Phase
 
-Phase 0 is the safety and privacy foundation: schema, row-level security, consent and age rules, an evidence registry, and a deterministic emergency screen that runs before any model call.
-
-Meal logging, USDA lookup, and the assistant journey are not built yet.
+Phases 0–3 run locally without API keys: demo sign-in, onboarding, meal logging, movement, habits, lessons, quests, and My Health Factors. Health factors explain topics, store optional family-history categories, and show a 7-day log of what you entered. They do not calculate a risk score. Production does not use the demo account or sample nutrients. Set `USDA_FOODDATA_API_KEY` and `OPENAI_API_KEY` to switch those providers on. Supabase magic-link sign-in is wired, but meal storage still uses the local demo file until a Supabase project is connected.
 
 ## Local setup
 
