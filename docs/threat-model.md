@@ -12,4 +12,4 @@
 | CSRF | Cookie auth will use SameSite defaults from Supabase SSR | Re-check when mutations exist |
 | Rate abuse | Config key `AI_DAILY_LIMIT_FREE` reserved | Limiter not enforced yet |
 | RLS bypass | No client insert policy on XP or safety events | Service-role routes must stay server-only |
-| Dependency risk | CI install and tests | `npm audit` reports one critical advisory to review |
+| Dependency risk | CI install and tests; Next.js pinned to 16.3.6 after a critical 16.3.2 advisory | Re-run `npm audit` when adding packages |

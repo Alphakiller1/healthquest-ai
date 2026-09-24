@@ -22,7 +22,7 @@ Python is not used. Node.js 20.9+ is required; this repo was checked on Node 24.
 
 ## Stack checked on 2026-09-24
 
-- Next.js 16.3.2 App Router, `proxy.ts` for session refresh
+- Next.js 16.3.6 App Router, `proxy.ts` for session refresh. 16.3.2 had a critical Windows/image advisory; 16.3.6 audits clean.
 - Supabase `@supabase/ssr` with `getClaims()`
 - OpenAI default model `gpt-5.6-luna` ($0.20 / $1.20 per million tokens). API data is not used for training unless the org opts in. Zero Data Retention is not enabled. Requests should set `store: false`.
 - USDA FoodData Central default limit: 1,000 requests per hour per IP
