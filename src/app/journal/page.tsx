@@ -18,7 +18,7 @@ export default async function JournalPage({
 }) {
   const session = await readSession();
   if (!session) redirect("/login");
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const user = store.getUser(session.userId);
   if (!user) redirect("/login");
   if (!user.onboardingComplete) redirect("/onboarding");

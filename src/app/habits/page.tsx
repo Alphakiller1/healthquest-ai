@@ -11,7 +11,7 @@ export default async function HabitsPage({
 }) {
   const user = await requireOnboardedUser();
   const params = await searchParams;
-  const habits = getDemoStore().listHabits(user.id);
+  const habits = (await getDemoStore()).listHabits(user.id);
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-6 py-12">
       <h1 className="text-3xl font-semibold tracking-tight">Sleep and daily notes</h1>

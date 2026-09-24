@@ -1,7 +1,10 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { cache } from "react";
 import { dataDir } from "@/lib/demo/data-dir";
+import { redisConfig, redisGet, redisSet } from "@/lib/demo/redis";
 import {
   appendXpEvent,
   type GamificationEvent,
@@ -350,7 +353,71 @@ function createStore(load: () => Database, save: (db: Database) => void): DemoSt
 
 let fileStore: DemoStore | null = null;
 
-export function getDemoStore(): DemoStore {
-  fileStore ??= createFileStore();
-  return fileStore;
+const REDIS_KEY = "hq:demo-store";
+
+type Snapshot = { store: DemoStore; db: Database; dirty: boolean };
+
+/** Set by withPersist for the duration of one server action. */
+const actionScope = new AsyncLocalStorage<{ snapshot: Promise<Snapshot> | null }>();
+
+async function loadSnapshot(writable: boolean): Promise<Snapshot> {
+  const config = redisConfig();
+  if (!config) throw new Error("Redis is not configured.");
+  const raw = await redisGet(config, REDIS_KEY);
+  const snapshot = { db: normalize(raw ? (JSON.parse(raw) as Partial<Database>) : null), dirty: false } as Snapshot;
+  snapshot.store = createStore(
+    () => snapshot.db,
+    (next) => {
+      if (!writable) {
+        throw new Error("Demo store writes must run inside a withPersist server action.");
+      }
+      snapshot.db = next;
+      snapshot.dirty = true;
+    },
+  );
+  return snapshot;
+}
+
+/** One read-only snapshot per server render. */
+const renderSnapshot = cache(() => loadSnapshot(false));
+
+/**
+ * The demo store. Locally it is a JSON file. When Redis is configured (the
+ * deployed tester build) each request works on a snapshot of the whole
+ * document; server actions wrapped in withPersist write it back before they
+ * redirect, so the next request, on any instance, sees the change.
+ */
+export async function getDemoStore(): Promise<DemoStore> {
+  if (!redisConfig()) {
+    fileStore ??= createFileStore();
+    return fileStore;
+  }
+  const scope = actionScope.getStore();
+  if (scope) {
+    scope.snapshot ??= loadSnapshot(true);
+    return (await scope.snapshot).store;
+  }
+  return (await renderSnapshot()).store;
+}
+
+/**
+ * Wrap every exported server action that can write. The finally block runs
+ * before a redirect leaves the action, because redirect() throws.
+ * Last write wins: fine for a handful of testers, not for production.
+ */
+export function withPersist<Args extends unknown[], Result>(
+  action: (...args: Args) => Promise<Result>,
+): (...args: Args) => Promise<Result> {
+  return async (...args: Args) => {
+    const scope: { snapshot: Promise<Snapshot> | null } = { snapshot: null };
+    try {
+      return await actionScope.run(scope, () => action(...args));
+    } finally {
+      const config = redisConfig();
+      if (config && scope.snapshot) {
+        const snapshot = await scope.snapshot;
+        if (snapshot.dirty) await redisSet(config, REDIS_KEY, JSON.stringify(snapshot.db));
+      }
+    }
+  };
 }

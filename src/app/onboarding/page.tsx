@@ -15,7 +15,7 @@ export default async function OnboardingPage({
 }) {
   const session = await readSession();
   if (!session) redirect("/login");
-  const user = getDemoStore().getUser(session.userId);
+  const user = (await getDemoStore()).getUser(session.userId);
   if (!user) redirect("/login");
   if (user.onboardingComplete) redirect("/dashboard");
   const params = await searchParams;

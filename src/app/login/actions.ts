@@ -4,13 +4,13 @@ import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { demoModeEnabled, testerCodeMatches, testerModeEnabled, writeSession } from "@/lib/demo/session";
-import { getDemoStore } from "@/lib/demo/store";
+import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { getPublicSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 const emailSchema = z.string().trim().email();
 
-export async function signIn(formData: FormData) {
+async function signInAction(formData: FormData) {
   const email = emailSchema.safeParse(formData.get("email"));
   if (!email.success) {
     redirect("/login?error=email");
@@ -35,7 +35,7 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=config");
   }
 
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const existing = store.getUserByEmail(email.data);
   const user = existing ?? {
     id: randomUUID(),
@@ -51,3 +51,5 @@ export async function signIn(formData: FormData) {
   await writeSession({ userId: user.id, email: user.email, demo: true });
   redirect(user.onboardingComplete ? "/dashboard" : "/onboarding");
 }
+
+export const signIn = withPersist(signInAction);

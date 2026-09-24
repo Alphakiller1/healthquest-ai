@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createAssistant } from "@/lib/ai/create-assistant";
 import { readSession } from "@/lib/demo/session";
-import { getDemoStore } from "@/lib/demo/store";
+import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { recordMeal } from "@/lib/journey/record-meal";
 import { awardCompletedQuests } from "@/lib/gamification/quests";
 import { getNutritionProvider } from "@/lib/nutrition/provider";
@@ -12,26 +12,26 @@ import type { NutritionSearchResult } from "@/lib/nutrition/types";
 async function requireUser() {
   const session = await readSession();
   if (!session) redirect("/login");
-  const user = getDemoStore().getUser(session.userId);
+  const user = (await getDemoStore()).getUser(session.userId);
   if (!user) redirect("/login");
   if (!user.onboardingComplete) redirect("/onboarding");
   return user;
 }
 
-export async function searchFoods(query: string): Promise<NutritionSearchResult> {
+async function searchFoodsAction(query: string): Promise<NutritionSearchResult> {
   await requireUser();
   const nutrition = getNutritionProvider();
   if (!nutrition.ok) return { status: "unavailable", message: nutrition.message };
   return nutrition.provider.search(query);
 }
 
-export async function deleteMeal(formData: FormData) {
+async function deleteMealAction(formData: FormData) {
   const user = await requireUser();
-  getDemoStore().deleteMeal(user.id, String(formData.get("mealId") ?? ""));
+  (await getDemoStore()).deleteMeal(user.id, String(formData.get("mealId") ?? ""));
   redirect("/journal");
 }
 
-export async function saveMeal(formData: FormData) {
+async function saveMealAction(formData: FormData) {
   const user = await requireUser();
   const nutrition = getNutritionProvider();
   if (!nutrition.ok) {
@@ -39,7 +39,7 @@ export async function saveMeal(formData: FormData) {
   }
   const assistant = createAssistant();
   const result = await recordMeal({
-    store: getDemoStore(),
+    store: (await getDemoStore()),
     user,
     draft: {
       foodName: String(formData.get("foodName") ?? ""),
@@ -58,9 +58,13 @@ export async function saveMeal(formData: FormData) {
     redirect(`/journal?emergency=${result.actions.includes("call_988") ? "crisis" : "medical"}`);
   }
   if (result.status === "saved") {
-    awardCompletedQuests(getDemoStore(), user.id);
+    awardCompletedQuests((await getDemoStore()), user.id);
     redirect(`/journal?saved=${result.meal.id}`);
   }
   if (result.status === "invalid") redirect("/journal?notice=invalid");
   redirect("/journal?notice=invalid");
 }
+
+export const searchFoods = withPersist(searchFoodsAction);
+export const deleteMeal = withPersist(deleteMealAction);
+export const saveMeal = withPersist(saveMealAction);

@@ -2,13 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { readSession } from "@/lib/demo/session";
-import { getDemoStore } from "@/lib/demo/store";
+import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { completeOnboarding } from "@/lib/journey/onboarding";
 
-export async function submitOnboarding(formData: FormData) {
+async function submitOnboardingAction(formData: FormData) {
   const session = await readSession();
   if (!session) redirect("/login");
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const user = store.getUser(session.userId);
   if (!user) redirect("/login");
   const result = completeOnboarding(store, user, {
@@ -25,3 +25,5 @@ export async function submitOnboarding(formData: FormData) {
   if (result.status === "invalid") redirect("/onboarding?error=form");
   redirect("/dashboard");
 }
+
+export const submitOnboarding = withPersist(submitOnboardingAction);

@@ -14,7 +14,7 @@ import { HQChip, HQXp } from "./primitives";
  */
 export async function HQAppShell({ children }: { children: ReactNode }) {
   const session = await readSession();
-  const user = session ? getDemoStore().getUser(session.userId) : undefined;
+  const user = session ? (await getDemoStore()).getUser(session.userId) : undefined;
   const withNav = Boolean(user?.onboardingComplete);
   const testBadge = testerModeEnabled() ? (
     <span title="Tester build. Data is temporary and can reset.">
@@ -41,7 +41,7 @@ export async function HQAppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const xp = totalXp(getDemoStore().listXp(user.id));
+  const xp = totalXp((await getDemoStore()).listXp(user.id));
   const level = levelForXp(xp);
 
   return (

@@ -31,3 +31,12 @@ Python is not used. Node.js 20.9+ is required; this repo was checked on Node 24.
 - `npm run typecheck`
 - `npm test`
 - `npm run build`
+
+## Tester access on the deployed build
+
+Until email sign-in is live, testers sign in with any email plus a shared access code. It turns on only when all of these are set in Vercel production:
+
+- `TESTER_ACCESS_CODE` (16+ characters) and `TESTER_SESSION_SECRET` (32+ characters)
+- Upstash Redis (`KV_REST_API_URL` / `KV_REST_API_TOKEN`, added by the Vercel Upstash integration). Vercel instances don't share disk, so the demo store lives in Redis there.
+
+It switches off automatically once `NEXT_PUBLIC_SUPABASE_URL` is set. The Redis store keeps the whole demo database in one key, and the last write wins, which is fine for a few testers but not for real users. Server actions that write must be wrapped in `withPersist`, and a write outside one throws.

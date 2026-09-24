@@ -18,7 +18,7 @@ export default async function HealthFactorsPage({
 }) {
   const user = await requireOnboardedUser();
   const params = await searchParams;
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const goals = GOAL_OPTIONS.filter((goal) => user.goals.includes(goal.id));
   const contexts = HEALTH_CONTEXTS.filter((context) =>
     (user.healthContextIds ?? []).includes(context.id),

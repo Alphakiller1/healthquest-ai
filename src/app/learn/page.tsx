@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LearnPage() {
   const user = await requireOnboardedUser();
-  const done = new Set(getDemoStore().listLessonCompletions(user.id).map((item) => item.lessonId));
+  const done = new Set((await getDemoStore()).listLessonCompletions(user.id).map((item) => item.lessonId));
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 px-6 py-12">
       <h1 className="text-3xl font-semibold tracking-tight">Lessons</h1>

@@ -32,7 +32,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await readSession();
-  const user = session ? getDemoStore().getUser(session.userId) : null;
+  const user = session ? (await getDemoStore()).getUser(session.userId) : null;
   return (
     <html
       lang="en"

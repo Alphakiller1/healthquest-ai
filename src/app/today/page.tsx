@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Today · HealthQuest" };
 export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const user = await requireOnboardedUser();
   const { notice } = await searchParams;
-  const model = buildToday(getDemoStore(), user);
+  const model = buildToday((await getDemoStore()), user);
   return (
     <TodayScreen
       model={model}

@@ -6,7 +6,7 @@ import { usCalendarDate } from "@/lib/health/calendar";
 export async function GET() {
   const session = await readSession();
   if (!session) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const user = store.getUser(session.userId);
   if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
   const body = {

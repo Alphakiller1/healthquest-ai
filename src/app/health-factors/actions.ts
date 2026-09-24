@@ -2,14 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { readSession } from "@/lib/demo/session";
-import { getDemoStore } from "@/lib/demo/store";
+import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { normalizeFamilyHistory } from "@/lib/health/family-history";
 import { normalizeHealthContexts, shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
 
-export async function saveHealthTopics(formData: FormData) {
+async function saveHealthTopicsAction(formData: FormData) {
   const session = await readSession();
   if (!session) redirect("/login");
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const user = store.getUser(session.userId);
   if (!user?.onboardingComplete) redirect("/onboarding");
   const healthContextIds = normalizeHealthContexts(formData.getAll("contexts").map(String));
@@ -21,10 +21,10 @@ export async function saveHealthTopics(formData: FormData) {
   redirect("/health-factors?saved=topics");
 }
 
-export async function saveFamilyHistory(formData: FormData) {
+async function saveFamilyHistoryAction(formData: FormData) {
   const session = await readSession();
   if (!session) redirect("/login");
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const user = store.getUser(session.userId);
   if (!user?.onboardingComplete) redirect("/onboarding");
   store.saveUser({
@@ -33,3 +33,6 @@ export async function saveFamilyHistory(formData: FormData) {
   });
   redirect("/health-factors?saved=1");
 }
+
+export const saveHealthTopics = withPersist(saveHealthTopicsAction);
+export const saveFamilyHistory = withPersist(saveFamilyHistoryAction);

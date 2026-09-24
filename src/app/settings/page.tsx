@@ -84,7 +84,7 @@ export default async function SettingsPage({
         <p className="mt-2">
           If an OpenAI key is configured, requests use the Responses API with storage turned off. Zero Data Retention is not enabled. Without a key, development uses a labeled local explanation. Saved conversations, if you turn them on, stay in your export and are deleted with your account.
         </p>
-        <p className="mt-2">{getDemoStore().listConversations(user.id).length} saved conversation lines.</p>
+        <p className="mt-2">{(await getDemoStore()).listConversations(user.id).length} saved conversation lines.</p>
         <form action={clearSavedConversations} className="mt-3">
           <button className="h-12 rounded-full border border-zinc-300 px-5" type="submit">Delete saved conversations</button>
         </form>

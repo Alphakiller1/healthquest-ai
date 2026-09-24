@@ -2,16 +2,16 @@
 
 import { redirect } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
-import { getDemoStore } from "@/lib/demo/store";
+import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { awardSevenDayMilestone } from "@/lib/gamification/milestone";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { QUEST_PRESENTATION } from "@/lib/today/today";
 
 /* Today's own actions return to Today with a notice, so the screen can confirm in place. */
 
-export async function checkInToday() {
+async function checkInTodayAction() {
   const user = await requireOnboardedUser();
-  const store = getDemoStore();
+  const store = await getDemoStore();
   store.award({
     userId: user.id,
     eventType: "daily_check_in",
@@ -21,11 +21,11 @@ export async function checkInToday() {
   redirect("/today?notice=checkin");
 }
 
-export async function setQuestAside(formData: FormData) {
+async function setQuestAsideAction(formData: FormData) {
   const user = await requireOnboardedUser();
   const questId = String(formData.get("questId") ?? "");
   if (!(questId in QUEST_PRESENTATION)) redirect("/today");
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const current = store.getUser(user.id);
   if (!current) redirect("/login");
   store.saveUser({
@@ -34,3 +34,6 @@ export async function setQuestAside(formData: FormData) {
   });
   redirect("/today?notice=skipped");
 }
+
+export const checkInToday = withPersist(checkInTodayAction);
+export const setQuestAside = withPersist(setQuestAsideAction);

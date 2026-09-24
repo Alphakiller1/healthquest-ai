@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { redisConfig } from "@/lib/demo/redis";
 
 export type DemoSession = {
   userId: string;
@@ -70,14 +71,16 @@ export function demoModeEnabled(): boolean {
 /**
  * Tester sign-in for a deployed build before email sign-in exists. Off unless
  * both secrets are set in the environment, and always off once Supabase is
- * configured. Data lives in temporary storage and can reset.
+ * configured. On Vercel it also needs Redis, because instance storage is
+ * not shared between requests.
  */
 export function testerModeEnabled(): boolean {
   return (
     process.env.NODE_ENV === "production" &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL &&
     (process.env.TESTER_ACCESS_CODE?.length ?? 0) >= 16 &&
-    (process.env.TESTER_SESSION_SECRET?.length ?? 0) >= 32
+    (process.env.TESTER_SESSION_SECRET?.length ?? 0) >= 32 &&
+    (!process.env.VERCEL || redisConfig() !== null)
   );
 }
 

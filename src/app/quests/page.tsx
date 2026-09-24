@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function QuestsPage() {
   const user = await requireOnboardedUser();
-  const quests = questViews(getDemoStore(), user.id);
+  const quests = questViews((await getDemoStore()), user.id);
   const monday = questPeriod(usCalendarDate(new Date().toISOString()));
   const weekLabel = `Week of ${new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(`${monday}T12:00:00Z`))}`;
   return <QuestsScreen quests={quests} weekLabel={weekLabel} skipAction={skipQuest} />;

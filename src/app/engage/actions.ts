@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
-import { getDemoStore } from "@/lib/demo/store";
+import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { awardSevenDayMilestone } from "@/lib/gamification/milestone";
 import { awardCompletedQuests } from "@/lib/gamification/quests";
 
@@ -11,9 +11,9 @@ function today(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
 }
 
-export async function checkIn() {
+async function checkInAction() {
   const user = await requireOnboardedUser();
-  const store = getDemoStore();
+  const store = await getDemoStore();
   store.award({
     userId: user.id,
     eventType: "daily_check_in",
@@ -23,7 +23,7 @@ export async function checkIn() {
   redirect("/dashboard");
 }
 
-export async function logActivity(formData: FormData) {
+async function logActivityAction(formData: FormData) {
   const user = await requireOnboardedUser();
   const activityType = String(formData.get("activityType") ?? "").trim();
   const duration = Number(formData.get("durationMinutes"));
@@ -34,7 +34,7 @@ export async function logActivity(formData: FormData) {
   if (intensity !== "easy" && intensity !== "moderate" && intensity !== "hard") {
     redirect("/move?error=1");
   }
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const id = randomUUID();
   store.addActivity({
     id,
@@ -51,7 +51,7 @@ export async function logActivity(formData: FormData) {
   redirect("/move?saved=1");
 }
 
-export async function logHabit(formData: FormData) {
+async function logHabitAction(formData: FormData) {
   const user = await requireOnboardedUser();
   const sleep = formData.get("sleepHours");
   const water = formData.get("waterCups");
@@ -70,7 +70,7 @@ export async function logHabit(formData: FormData) {
   if (waterCups !== null && waterCups < 0) redirect("/habits?error=1");
   if (stressRating !== null && (stressRating < 1 || stressRating > 5)) redirect("/habits?error=1");
   if (moodRating !== null && (moodRating < 1 || moodRating > 5)) redirect("/habits?error=1");
-  const store = getDemoStore();
+  const store = await getDemoStore();
   store.addHabit({
     id: randomUUID(),
     userId: user.id,
@@ -84,10 +84,10 @@ export async function logHabit(formData: FormData) {
   redirect("/habits?saved=1");
 }
 
-export async function skipQuest(formData: FormData) {
+async function skipQuestAction(formData: FormData) {
   const user = await requireOnboardedUser();
   const questId = String(formData.get("questId") ?? "");
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const current = store.getUser(user.id);
   if (!current) redirect("/login");
   store.saveUser({
@@ -96,3 +96,8 @@ export async function skipQuest(formData: FormData) {
   });
   redirect("/quests");
 }
+
+export const checkIn = withPersist(checkInAction);
+export const logActivity = withPersist(logActivityAction);
+export const logHabit = withPersist(logHabitAction);
+export const skipQuest = withPersist(skipQuestAction);

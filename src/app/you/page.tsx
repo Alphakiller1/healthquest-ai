@@ -28,7 +28,7 @@ const MARKS: { id: string; title: string; hint: string; symbol: HQIconName; tier
 
 export default async function YouPage() {
   const user = await requireOnboardedUser();
-  const store = getDemoStore();
+  const store = await getDemoStore();
   const xp = totalXp(store.listXp(user.id));
   const level = levelForXp(xp);
   const levelIndex = LEVELS.findIndex((item) => item.name === level.name);

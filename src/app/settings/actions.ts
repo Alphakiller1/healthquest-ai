@@ -2,18 +2,18 @@
 
 import { clearSession } from "@/lib/demo/session";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
-import { getDemoStore } from "@/lib/demo/store";
+import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
 import { GOAL_OPTIONS } from "@/lib/journey/onboarding";
 import { redirect } from "next/navigation";
 
-export async function updatePreferences(formData: FormData) {
+async function updatePreferencesAction(formData: FormData) {
   const user = await requireOnboardedUser();
   const allowed = new Set<string>(GOAL_OPTIONS.map((goal) => goal.id));
   const goals = formData.getAll("goals").map(String).filter((id) => allowed.has(id));
   if (goals.length === 0) redirect("/settings?error=goals");
   const contexts = user.healthContextIds ?? [];
-  getDemoStore().saveUser({
+  (await getDemoStore()).saveUser({
     ...user,
     goals,
     gentleFoodMode:
@@ -24,26 +24,31 @@ export async function updatePreferences(formData: FormData) {
     saveAiConversations: formData.get("saveAiConversations") === "on",
   });
   if (formData.get("saveAiConversations") !== "on") {
-    getDemoStore().clearConversations(user.id);
+    (await getDemoStore()).clearConversations(user.id);
   }
   redirect("/settings?saved=1");
 }
 
-export async function clearSavedConversations() {
+async function clearSavedConversationsAction() {
   const user = await requireOnboardedUser();
-  getDemoStore().clearConversations(user.id);
+  (await getDemoStore()).clearConversations(user.id);
   redirect("/settings?saved=1");
 }
 
-export async function signOut() {
+async function signOutAction() {
   await clearSession();
   redirect("/");
 }
 
-export async function deleteAccount(formData: FormData) {
+async function deleteAccountAction(formData: FormData) {
   const user = await requireOnboardedUser();
   if (String(formData.get("confirm") ?? "") !== "DELETE") redirect("/settings?error=confirm");
-  getDemoStore().deleteUser(user.id);
+  (await getDemoStore()).deleteUser(user.id);
   await clearSession();
   redirect("/?deleted=1");
 }
+
+export const updatePreferences = withPersist(updatePreferencesAction);
+export const clearSavedConversations = withPersist(clearSavedConversationsAction);
+export const signOut = withPersist(signOutAction);
+export const deleteAccount = withPersist(deleteAccountAction);

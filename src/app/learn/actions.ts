@@ -2,19 +2,19 @@
 
 import { redirect } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
-import { getDemoStore } from "@/lib/demo/store";
+import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { awardSevenDayMilestone } from "@/lib/gamification/milestone";
 import { awardCompletedQuests } from "@/lib/gamification/quests";
 import { getLesson } from "@/lib/learn/lessons";
 
-export async function submitLesson(formData: FormData) {
+async function submitLessonAction(formData: FormData) {
   const user = await requireOnboardedUser();
   const lessonId = String(formData.get("lessonId") ?? "");
   const lesson = getLesson(lessonId);
   if (!lesson) redirect("/learn");
   const choice = Number(formData.get("answer"));
   const correct = choice === lesson.quiz.answer;
-  const store = getDemoStore();
+  const store = await getDemoStore();
   store.completeLesson({
     userId: user.id,
     lessonId,
@@ -29,3 +29,5 @@ export async function submitLesson(formData: FormData) {
   awardSevenDayMilestone(store, user.id);
   redirect(`/learn/${lessonId}?result=${correct ? "correct" : "retry"}`);
 }
+
+export const submitLesson = withPersist(submitLessonAction);
