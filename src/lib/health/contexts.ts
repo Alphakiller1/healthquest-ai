@@ -28,6 +28,12 @@ export const HEALTH_CONTEXTS: readonly HealthContextDefinition[] = [
   { id: "type_1_diabetes", label: "Type 1 diabetes", mode: "education_only" },
 ];
 
+const CONTEXT_IDS = new Set(HEALTH_CONTEXTS.map((context) => context.id));
+
+export function normalizeHealthContexts(ids: readonly string[]): string[] {
+  return [...new Set(ids.filter((id) => CONTEXT_IDS.has(id)))];
+}
+
 export function resolveCoachingMode(
   selectedIds: readonly string[],
 ): CoachingMode {
