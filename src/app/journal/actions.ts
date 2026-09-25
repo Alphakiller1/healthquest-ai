@@ -33,10 +33,8 @@ async function deleteMealAction(formData: FormData) {
 
 async function saveMealAction(formData: FormData) {
   const user = await requireUser();
+  // Nutrition matching is optional: a meal always saves, with or without USDA data.
   const nutrition = getNutritionProvider();
-  if (!nutrition.ok) {
-    redirect("/journal?notice=nutrition");
-  }
   const assistant = createAssistant();
   const result = await recordMeal({
     store: (await getDemoStore()),
@@ -50,7 +48,7 @@ async function saveMealAction(formData: FormData) {
       notes: String(formData.get("notes") ?? ""),
       fdcId: String(formData.get("fdcId") ?? "") || null,
     },
-    nutrition: nutrition.provider,
+    nutrition: nutrition.ok ? nutrition.provider : null,
     assistant: assistant.provider,
     assistantDemo: assistant.demo,
   });

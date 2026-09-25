@@ -11,8 +11,11 @@ export function HQAssistantResponse({
   question,
   response,
   sample,
+  questionLabel,
 }: {
   question: string;
+  /** Overrides the "You asked" label, e.g. for a meal explanation. */
+  questionLabel?: string;
   response: AssistantResponse;
   /** Marks a design-time example so it is never mistaken for a live answer. */
   sample?: boolean;
@@ -24,7 +27,7 @@ export function HQAssistantResponse({
   return (
     <article className="hq-answer" aria-label="HealthQuest answer">
       <header className="hq-answer__question">
-        <span className="hq-label">{sample ? "Example question" : "You asked"}</span>
+        <span className="hq-label">{questionLabel ?? (sample ? "Example question" : "You asked")}</span>
         <p>{question}</p>
       </header>
 

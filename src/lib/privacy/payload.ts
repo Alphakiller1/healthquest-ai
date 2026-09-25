@@ -24,6 +24,7 @@ export type RawUserContext = {
   message: string;
   food?: SafeAssistantInput["food"];
   allowedSourceIds: string[];
+  claims?: SafeAssistantInput["claims"];
   unrelatedNotes?: string;
 };
 
@@ -38,6 +39,7 @@ export function buildMinimalAssistantInput(
     coachingMode: raw.coachingMode,
     food: raw.food,
     allowedSourceIds: raw.allowedSourceIds,
+    ...(raw.claims ? { claims: raw.claims } : {}),
   };
   const serialized = JSON.stringify(input);
   for (const key of FORBIDDEN_KEYS) {

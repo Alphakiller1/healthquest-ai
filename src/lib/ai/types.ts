@@ -16,6 +16,15 @@ export type SafeAssistantInput = {
   coachingMode: "contextual_education" | "education_only";
   food?: SafeFoodContext;
   allowedSourceIds: string[];
+  /** Reviewed claims the answer may state. Each carries the source it must be cited with. */
+  claims?: AssistantClaim[];
+};
+
+export type AssistantClaim = {
+  id: string;
+  sourceId: string;
+  kind: "explain" | "pattern" | "practical" | "boundary" | "ask";
+  claim: string;
 };
 
 export type AssistantResponse = {
@@ -30,7 +39,8 @@ export type AssistantResponse = {
 };
 
 export interface HealthAssistantProvider {
-  generate(input: SafeAssistantInput): Promise<AssistantResponse>;
+  /** correction: why the previous attempt failed validation, for the one retry. */
+  generate(input: SafeAssistantInput, correction?: string): Promise<AssistantResponse>;
 }
 
 export const REQUIRED_DISCLAIMER =

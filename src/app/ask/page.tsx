@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
-import { AskScreen } from "@/components/screens/ask-screen";
+import { AskClient } from "@/components/screens/ask-client";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
+import { askQuestion } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Ask · HealthQuest" };
 
 export default async function AskPage() {
-  await requireOnboardedUser();
-  return <AskScreen />;
+  const user = await requireOnboardedUser();
+  return (
+    <main className="hq-main">
+      <AskClient
+        ask={askQuestion}
+        aiConfigured={Boolean(process.env.OPENAI_API_KEY)}
+        aiEnabled={user.aiEnabled !== false}
+        savingConversations={user.saveAiConversations === true}
+      />
+    </main>
+  );
 }

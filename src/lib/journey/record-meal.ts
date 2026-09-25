@@ -3,9 +3,10 @@ import { ASSISTANT_LIMIT_MESSAGE, assistantDailyLimit } from "@/lib/ai/daily-lim
 import { activeSourceIds } from "@/lib/evidence/registry";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { runAssistantPipeline } from "@/lib/ai/pipeline";
+import { prepareAssistantInput } from "@/lib/ai/prepare";
 import type { HealthAssistantProvider } from "@/lib/ai/types";
 import { awardSevenDayMilestone } from "@/lib/gamification/milestone";
-import { resolveCoachingMode, shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
+import { shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
 import { countSafetyCategory } from "@/lib/privacy/ops";
 import { evaluateSafety } from "@/lib/safety/evaluate";
 import { emergencyTemplate } from "@/lib/safety/responses";
@@ -49,7 +50,7 @@ export async function recordMeal(input: {
   store: DemoStore;
   user: DemoUser;
   draft: MealDraft;
-  nutrition: NutritionProvider;
+  nutrition: NutritionProvider | null;
   assistant: HealthAssistantProvider | null;
   assistantDemo: boolean;
 }): Promise<RecordMealResult> {
@@ -72,7 +73,7 @@ export async function recordMeal(input: {
     return { status: "emergency", message: template.message, actions: template.actions };
   }
 
-  const matched = input.draft.fdcId
+  const matched = input.draft.fdcId && input.nutrition
     ? await input.nutrition.getById(input.draft.fdcId)
     : null;
   const meal: MealRecord = {
@@ -101,7 +102,6 @@ export async function recordMeal(input: {
 
   const contexts = input.user.healthContextIds ?? [];
   const gentle = input.user.gentleFoodMode || shouldRecommendGentleFoodMode(contexts);
-  const coachingMode = resolveCoachingMode(contexts);
   const day = usCalendarDate(new Date().toISOString());
   const explanationsOff = input.user.aiEnabled === false;
   const limitReached =
@@ -121,13 +121,7 @@ export async function recordMeal(input: {
     };
   } else if (input.assistant) {
     const pipeline = await runAssistantPipeline(
-    {
-      message: `How does this meal relate to what I am trying to learn? ${foodName}`,
-      wellnessContexts: contexts,
-      goals: input.user.goals,
-      gentleFoodMode: gentle,
-      coachingMode,
-      food: {
+      prepareAssistantInput(input.user, `How does this meal relate to what I'm trying to learn? ${foodName}`, {
         description: [foodName, input.draft.preparation].filter(Boolean).join(", "),
         nutrientStatus: matched ? "matched" : "uncertain",
         demoNutrition: matched?.demo ?? false,
@@ -140,9 +134,7 @@ export async function recordMeal(input: {
               protein: matched.protein,
             }
           : undefined,
-      },
-      allowedSourceIds: [...activeSourceIds()],
-    },
+      }),
     input.assistant,
     activeSourceIds(),
   );

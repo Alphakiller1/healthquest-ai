@@ -47,21 +47,30 @@ export async function runAssistantPipeline(
     };
   }
 
+  // A citation must be a source that was both active and handed in for this question.
+  const citable = new Set(input.allowedSourceIds.filter((id) => knownSourceIds.has(id)));
   let providerCalled = false;
+  let correction: string | undefined;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     providerCalled = true;
     let generated;
     try {
-      generated = await provider.generate(input);
+      generated = await provider.generate(input, correction);
     } catch {
+      correction = undefined;
       continue;
     }
-    const validated = validateAssistantResponse(generated, knownSourceIds);
+    const validated = validateAssistantResponse(generated, citable, { gentleFoodMode: input.gentleFoodMode });
+    if (!validated.ok) {
+      correction = validated.reason;
+      continue;
+    }
     if (validated.ok) {
       if (
         input.coachingMode === "education_only" &&
         validated.response.status !== "education_only"
       ) {
+        correction = "status must be education_only for this person, with general explanation only";
         continue;
       }
       return {

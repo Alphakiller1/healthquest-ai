@@ -1,4 +1,4 @@
-export const SAFETY_RULE_VERSION = "2026.09.24.1";
+export const SAFETY_RULE_VERSION = "2026.09.25.2";
 
 export const SAFETY_CATEGORIES = [
   "cardiac",
@@ -8,6 +8,7 @@ export const SAFETY_CATEGORIES = [
   "bleeding",
   "consciousness",
   "overdose",
+  "poisoning",
   "self_harm",
 ] as const;
 
@@ -28,4 +29,9 @@ export type SafetyRule = {
   category: SafetyCategory;
   responseKind: EmergencyResponseKind;
   pattern: RegExp;
+  /**
+   * Strong rules describe distress so specific ("my throat is closing") that an
+   * educational or past-tense frame elsewhere in the clause does not cancel them.
+   */
+  strong?: boolean;
 };
