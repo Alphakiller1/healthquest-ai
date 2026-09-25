@@ -2,7 +2,7 @@ import type { CoachingMode } from "@/lib/health/contexts";
 import { activeClaims, type EvidenceClaim } from "./claims";
 
 /** Topics a selected health context makes relevant. Context ids never reach the model beyond these. */
-const CONTEXT_TOPICS: Record<string, string[]> = {
+export const CONTEXT_TOPICS: Record<string, string[]> = {
   elevated_cholesterol: ["cholesterol", "saturated fat"],
   high_blood_pressure: ["blood pressure", "sodium"],
   prediabetes: ["diabetes", "fiber"],
@@ -14,7 +14,7 @@ const CONTEXT_TOPICS: Record<string, string[]> = {
   kidney_disease: ["sodium"],
 };
 
-const GOAL_TOPICS: Record<string, string[]> = {
+export const GOAL_TOPICS: Record<string, string[]> = {
   understand_nutrition: ["label"],
   move_more: ["movement"],
   sleep_better: ["sleep"],
@@ -68,6 +68,10 @@ export function selectEvidence(input: {
   goals: string[];
   coachingMode: CoachingMode;
   gentleFoodMode: boolean;
+  /** Topic weights from the health profile. They reorder relevant claims; they never add unrelated ones. */
+  profileTopics?: { topic: string; weight: number }[];
+  /** Foods the person doesn't eat; claims naming them are left out. */
+  excludeWords?: string[];
   limit?: number;
 }): EvidenceSelection {
   const weights = new Map<string, number>();
@@ -82,10 +86,13 @@ export function selectEvidence(input: {
   add(food, 2);
   add(input.contextIds.flatMap((id) => CONTEXT_TOPICS[id] ?? []), 1);
   add(input.goals.flatMap((id) => GOAL_TOPICS[id] ?? []), 0.5);
+  for (const { topic, weight } of input.profileTopics ?? []) add([topic], Math.min(weight, 2) * 0.5);
+  const excluded = (input.excludeWords ?? []).map((word) => new RegExp(`\\b${word}\\b`, "i"));
 
   const pool = activeClaims().filter((claim) => {
     if (input.coachingMode === "education_only" && !claim.educationOnlySafe) return false;
     if (input.gentleFoodMode && /calorie/i.test(claim.claim)) return false;
+    if (excluded.some((pattern) => pattern.test(claim.claim))) return false;
     return true;
   });
 

@@ -10,8 +10,9 @@ import { redirect } from "next/navigation";
 async function updatePreferencesAction(formData: FormData) {
   const user = await requireOnboardedUser();
   const allowed = new Set<string>(GOAL_OPTIONS.map((goal) => goal.id));
-  const goals = formData.getAll("goals").map(String).filter((id) => allowed.has(id));
-  if (goals.length === 0) redirect("/settings?error=goals");
+  // Goals now live in the health profile; keep the saved ones when this form doesn't send any.
+  const submitted = formData.getAll("goals").map(String).filter((id) => allowed.has(id));
+  const goals = submitted.length > 0 ? submitted : user.goals;
   const contexts = user.healthContextIds ?? [];
   (await getDemoStore()).saveUser({
     ...user,

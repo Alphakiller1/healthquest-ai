@@ -4,6 +4,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { cache } from "react";
 import { dataDir } from "@/lib/demo/data-dir";
+import type { HealthProfile } from "@/lib/profile/profile";
 import { redisConfig, redisGet, redisSet } from "@/lib/demo/redis";
 import {
   appendXpEvent,
@@ -34,6 +35,8 @@ export type DemoUser = {
   healthContextIds?: string[];
   familyHistoryCategories?: string[];
   skippedQuestIds?: string[];
+  /** Optional answers that shape quests, lessons, and answers. See lib/profile/profile.ts. */
+  profile?: HealthProfile;
 };
 
 export type MealRecord = {

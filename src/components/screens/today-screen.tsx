@@ -2,8 +2,9 @@ import Link from "next/link";
 import { REQUIRED_DISCLAIMER } from "@/lib/ai/types";
 import type { TodayModel } from "@/lib/today/today";
 import { HQToast } from "@/components/hq/feedback";
-import { HQIcon } from "@/components/hq/icon";
-import { HQButton, HQButtonLink, HQPath } from "@/components/hq/primitives";
+import { HQGlyph, HQIcon } from "@/components/hq/icon";
+import { HQLessonFeature } from "@/components/hq/learning";
+import { HQButton, HQButtonLink, HQPath, HQXp, stepsToNodes } from "@/components/hq/primitives";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
 
@@ -14,9 +15,16 @@ const NOTICES: Record<Exclude<TodayNotice, null>, { message: string; xp?: number
   skipped: { message: "Set aside for this week. No penalty." },
 };
 
+const QUICK = [
+  { href: "/journal", label: "Meal", hint: "What you had", icon: "bowl", tone: "sun" },
+  { href: "/move", label: "Movement", hint: "Any kind", icon: "motion", tone: "brand" },
+  { href: "/habits", label: "Rest", hint: "Sleep, notes", icon: "moon", tone: "night" },
+] as const;
+
 /**
  * The emotional centre of HealthQuest. It answers three questions in order:
  * where am I, what is one useful thing to do, and am I making progress.
+ * One action dominates; everything else is a tap away but quieter.
  */
 export function TodayScreen({
   model,
@@ -33,8 +41,11 @@ export function TodayScreen({
   embedded?: boolean;
 }) {
   const Root = embedded ? "div" : "main";
+  const focus = model.focus;
   const quest = model.quest;
+  const focusIsQuest = Boolean(quest && quest.presentation.action.href === focus.href);
   const justCheckedIn = notice === "checkin";
+  const lessonIsFocus = model.lesson ? focus.href === `/learn/${model.lesson.id}` : false;
 
   return (
     <Root className="hq-main" data-width="wide">
@@ -48,100 +59,135 @@ export function TodayScreen({
           <p className="hq-secondary">{model.subline}</p>
         </header>
 
-        <section className="hq-today__journey" aria-labelledby="journey-title">
-          <div className="hq-today__journey-head">
-            <h2 id="journey-title" className="hq-label">
-              Your week
-            </h2>
-            {model.checkedInToday ? (
-              <span className="hq-chip" data-tone="brand">
-                <HQIcon name="check" size={14} />
-                Checked in today
-              </span>
-            ) : checkInAction ? (
-              <form action={checkInAction}>
-                <HQButton type="submit" size="sm" variant="secondary" icon="sun">
-                  Check in
-                </HQButton>
-              </form>
-            ) : null}
-          </div>
-          <HQPath
-            label="This week, Monday to Sunday"
-            nodes={model.week.map((day) => ({
-              state: day.state === "current" && day.active ? "done" : day.state,
-              label: day.letter,
-              arrived: justCheckedIn && day.state === "current",
-              description: `${day.weekday}${day.state === "current" ? ", today" : ""}${
-                day.active ? ", you showed up" : day.state === "rest" ? ", rest day" : ""
-              }`,
-            }))}
-          />
-          <p className="hq-today__journey-foot hq-micro">
-            <span>
-              {model.activeDaysThisWeek === 0
-                ? "Your week starts whenever you do."
-                : `${model.activeDaysThisWeek} ${model.activeDaysThisWeek === 1 ? "day" : "days"} you showed up`}
-            </span>
-            <Link href="/you" className="hq-link-quiet">
-              {model.level.name}
-              {model.level.next ? ` · ${model.level.next}` : ""}
-            </Link>
-          </p>
-        </section>
-
         <section className="hq-today__quest" aria-labelledby="focus-title">
-          <p className="hq-label">One thing for today</p>
-          <h2 id="focus-title" className="hq-quest__title">{model.focus.title}</h2>
-          <p className="hq-secondary">{model.focus.why}</p>
-          <HQButtonLink href={model.focus.href} variant="primary" trailingIcon="arrow-right">
-            {model.focus.label}
-          </HQButtonLink>
+          <article className="hq-quest hq-today__focus">
+            <div className="hq-quest__kicker">
+              <span className="hq-quest__category">
+                <HQIcon name={focus.symbol} size={18} />
+                One thing for today
+              </span>
+              {focus.rewardXp ? <HQXp value={focus.rewardXp} reward /> : null}
+            </div>
+            <h2 id="focus-title" className="hq-quest__title">
+              {focus.title}
+            </h2>
+            {focus.progress ? (
+              <div className="hq-quest__progress">
+                <HQPath
+                  label={`${focus.progress.done} of ${focus.progress.total} done`}
+                  nodes={stepsToNodes(focus.progress.done, focus.progress.total)}
+                  showLabels={false}
+                  size="md"
+                  surface="raised"
+                />
+              </div>
+            ) : null}
+            <p className="hq-secondary" style={{ margin: 0 }}>
+              {focus.why}
+            </p>
+            <div className="hq-quest__actions">
+              <HQButtonLink href={focus.href} variant="primary" trailingIcon="arrow-right" block>
+                {focus.label}
+              </HQButtonLink>
+              {focusIsQuest && quest && skipQuestAction ? (
+                <form action={skipQuestAction} style={{ width: "100%" }}>
+                  <input type="hidden" name="questId" value={quest.id} />
+                  <HQButton type="submit" variant="quiet" block>
+                    Not this week
+                  </HQButton>
+                </form>
+              ) : null}
+            </div>
+          </article>
         </section>
 
-        {quest && quest.presentation.action.href !== model.focus.href ? (
-          <p className="hq-secondary">
-            This week you can also{" "}
-            <Link className="underline" href={quest.presentation.action.href}>
-              {quest.detail.replace(/\.$/, "").toLowerCase()}
-            </Link>
-            .
-          </p>
-        ) : null}
-        {quest && quest.presentation.action.href !== model.focus.href && skipQuestAction ? (
-          <form action={skipQuestAction}>
-            <input type="hidden" name="questId" value={quest.id} />
-            <HQButton type="submit" variant="quiet">
-              Not this week
-            </HQButton>
-          </form>
-        ) : null}
+        <section className="hq-today__log" aria-labelledby="log-title">
+          <h2 id="log-title" className="hq-label">
+            Log in one tap
+          </h2>
+          <div className="hq-quick-grid">
+            {QUICK.map((item) => (
+              <Link key={item.href} className="hq-quick" href={item.href}>
+                <HQGlyph name={item.icon} tone={item.tone} />
+                <span className="hq-quick__label">
+                  {item.label}
+                  <span className="hq-quick__hint">{item.hint}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <div className="hq-today__rail">
-          <section className="hq-today__log" aria-labelledby="log-title">
-            <h2 id="log-title" className="hq-label">
-              When you want more
-            </h2>
-            <ul className="hq-list-links">
-              {[
-                ["/journal", "Log a meal"],
-                ["/move", "Log movement"],
-                ["/habits", "Sleep and notes"],
-                ["/learn", "Lessons"],
-                ["/quests", "This week's quests"],
-              ]
-                .filter(([href]) => href !== model.focus.href)
-                .map(([href, label]) => (
-                  <li key={href}>
-                    <Link href={href}>{label}</Link>
-                  </li>
-                ))}
+          <section className="hq-today__journey" aria-labelledby="journey-title">
+            <div className="hq-today__journey-head">
+              <h2 id="journey-title" className="hq-label">
+                Your week
+              </h2>
+              {model.checkedInToday ? (
+                <span className="hq-chip" data-tone="brand">
+                  <HQIcon name="check" size={14} />
+                  Checked in
+                </span>
+              ) : checkInAction ? (
+                <form action={checkInAction}>
+                  <HQButton type="submit" size="sm" variant="secondary" icon="sun">
+                    Check in
+                  </HQButton>
+                </form>
+              ) : null}
+            </div>
+            <HQPath
+              label="This week, Monday to Sunday"
+              nodes={model.week.map((day) => ({
+                state: day.state === "current" && day.active ? "done" : day.state,
+                label: day.letter,
+                arrived: justCheckedIn && day.state === "current",
+                description: `${day.weekday}${day.state === "current" ? ", today" : ""}${
+                  day.active ? ", you showed up" : day.state === "rest" ? ", rest day" : ""
+                }`,
+              }))}
+            />
+            <ul className="hq-today__reflection">
+              {model.reflection.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
             </ul>
+            <p className="hq-today__journey-foot hq-micro">
+              <Link href="/quests" className="hq-link-quiet">
+                {model.questsDoneThisWeek > 0
+                  ? `${model.questsDoneThisWeek} ${model.questsDoneThisWeek === 1 ? "quest" : "quests"} done · See quests`
+                  : "See this week's quests"}
+              </Link>
+              <Link href="/you" className="hq-link-quiet">
+                {model.level.name}
+                {model.level.next ? ` · ${model.level.next}` : ""}
+              </Link>
+            </p>
           </section>
+
+          {model.lesson && !lessonIsFocus ? (
+            <div className="hq-today__learn">
+              <HQLessonFeature lesson={model.lesson} href={`/learn/${model.lesson.id}`} />
+            </div>
+          ) : null}
+
+          {!model.profileSet ? (
+            <Link href="/you/profile" className="hq-today__nudge">
+              <HQGlyph name="compass" tone="brand" />
+              <span>
+                <span className="hq-today__win-title">Shape HealthQuest around you</span>
+                <span className="hq-micro" style={{ display: "block" }}>
+                  A few optional answers size your quests and pick your lessons.
+                </span>
+              </span>
+              <HQIcon name="chevron-right" size={18} className="hq-tint-muted" />
+            </Link>
+          ) : null}
 
           <Link className="hq-ask hq-today__ask" href="/ask">
             <HQIcon name="compass" size={20} className="hq-tint-brand" />
-            <span className="hq-ask__text">Ask about a food, habit, or term</span>
+            <span className="hq-ask__text">Ask about food, habits, or a term</span>
             <span className="hq-ask__go" aria-hidden>
               <HQIcon name="arrow-right" size={18} />
             </span>

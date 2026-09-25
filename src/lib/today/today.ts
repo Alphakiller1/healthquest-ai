@@ -6,7 +6,7 @@ import { questPeriod } from "@/lib/gamification/quest-period";
 import { questViews, type QuestView } from "@/lib/gamification/quests";
 import { XP_VALUES, totalXp } from "@/lib/gamification/xp";
 import { usCalendarDate } from "@/lib/health/calendar";
-import { LESSONS } from "@/lib/learn/lessons";
+import { rankLessons, rankQuests, weeklyReflection, type RankedLesson, type RankedQuest } from "@/lib/profile/personalize";
 
 /*
  * Everything the Today screen shows, derived from the store in one place.
@@ -90,6 +90,9 @@ export type TodayFocus = {
   why: string;
   href: string;
   label: string;
+  symbol: QuestPresentation["symbol"] | "question";
+  progress?: { done: number; total: number };
+  rewardXp?: number;
 };
 
 export type TodayModel = {
@@ -103,10 +106,14 @@ export type TodayModel = {
   activeDaysThisWeek: number;
   xp: number;
   level: { name: LevelName; next: string | null; progress: number };
-  quest: (QuestView & { steps: { done: number; total: number }; presentation: QuestPresentation }) | null;
+  quest: (QuestView & { steps: { done: number; total: number }; presentation: QuestPresentation; reason?: string | null }) | null;
   questsDoneThisWeek: number;
   lesson: { id: string; title: string; minutes: number; rewardXp: number; reason: string } | null;
   recentWin: { title: string; detail: string } | null;
+  /** Plain counts of what was logged this week. */
+  reflection: string[];
+  /** Whether the person has filled in their health profile yet. */
+  profileSet: boolean;
 };
 
 function greetingFor(hour: number) {
@@ -132,18 +139,36 @@ function addDays(isoDate: string, days: number) {
   return date.toISOString().slice(0, 10);
 }
 
-export function focusForToday(store: DemoStore, user: DemoUser): TodayFocus {
+/**
+ * The one next step on Today. First-run steps come first; after that, a quest
+ * one step from done, a morning sleep note when sleep is a focus, the quest
+ * the profile ranks highest, then the best-matched unread lesson. Every step
+ * says why it was picked, in the person's own terms.
+ */
+export function focusForToday(
+  store: DemoStore,
+  user: DemoUser,
+  context: {
+    now?: Date;
+    quest?: (RankedQuest & { steps: { done: number; total: number } }) | null;
+    lesson?: RankedLesson | null;
+  } = {},
+): TodayFocus {
+  const now = context.now ?? new Date();
   const goals = new Set(user.goals);
   const meals = store.listMeals(user.id).length;
   const movement = store.listActivities(user.id).length;
-  const lessons = new Set(store.listLessonCompletions(user.id).map((item) => item.lessonId));
   const questions = store.listVisitQuestions(user.id).length;
+  const today = usCalendarDate(now.toISOString());
+  const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: "America/New_York" }).format(now));
+
   if ((goals.size === 0 || goals.has("understand_nutrition") || goals.has("affordable_meals")) && meals === 0) {
     return {
       title: "Log one meal you already eat",
       why: "One familiar meal is enough to start. You can add a cost if you want.",
       href: "/journal",
       label: "Log a meal",
+      symbol: "bowl",
     };
   }
   if (goals.has("move_more") && movement === 0) {
@@ -152,37 +177,76 @@ export function focusForToday(store: DemoStore, user: DemoUser): TodayFocus {
       why: "A walk or chores counts. HealthQuest does not estimate calories burned.",
       href: "/move",
       label: "Log movement",
+      symbol: "motion",
     };
   }
-  if (goals.has("sleep_better") && !lessons.has("sleep")) {
+
+  const quest = context.quest;
+  const presentation = quest ? QUEST_PRESENTATION[quest.id] : undefined;
+  if (quest && presentation && quest.steps.total > 1 && quest.steps.total - quest.steps.done === 1) {
     return {
-      title: "Read about sleep consistency",
-      why: "A short lesson. It does not diagnose a sleep problem.",
-      href: "/learn/sleep",
-      label: "Read the lesson",
+      title: `One more to finish your ${presentation.category.toLowerCase()}`,
+      why: `${quest.steps.done} of ${quest.steps.total} done this week. ${presentation.why}`,
+      href: presentation.action.href,
+      label: presentation.action.label,
+      symbol: presentation.symbol,
+      progress: quest.steps,
+      rewardXp: presentation.rewardXp,
     };
   }
+
+  const sleepFocus = goals.has("sleep_better") || user.profile?.sleepTypical === "under_6" || user.profile?.sleepTypical === "varies";
+  const sleptNoted = store.listHabits(user.id).some((habit) => habit.loggedOn === today && habit.sleepHours !== null);
+  if (sleepFocus && hour >= 5 && hour < 12 && !sleptNoted) {
+    return {
+      title: "Note how long you slept",
+      why: "It takes a few seconds. A few nights of notes shows your own pattern — it isn't a diagnosis.",
+      href: "/habits",
+      label: "Add a sleep note",
+      symbol: "moon",
+    };
+  }
+
   if (goals.has("prepare_for_visit") && questions === 0) {
     return {
       title: "Write one question for a clinician",
-      why: "HealthQuest stores the question. It does not answer it as medical advice.",
+      why: "HealthQuest stores the question for your visit. It does not answer it as medical advice.",
       href: "/visit",
       label: "Write a question",
+      symbol: "question",
     };
   }
-  if (!lessons.has("food-labels")) {
+
+  if (quest && presentation) {
     return {
-      title: "Read how a food label works",
-      why: "The serving size changes every number under it.",
-      href: "/learn/food-labels",
-      label: "Read the lesson",
+      title: quest.detail.replace(/\.$/, ""),
+      why: quest.reason ? `${quest.reason}. ${presentation.why}` : presentation.why,
+      href: presentation.action.href,
+      label: presentation.action.label,
+      symbol: presentation.symbol,
+      progress: quest.steps.total > 1 ? quest.steps : undefined,
+      rewardXp: presentation.rewardXp,
     };
   }
+
+  const lesson = context.lesson;
+  if (lesson && !lesson.done) {
+    return {
+      title: `Read “${lesson.lesson.title}”`,
+      why: `${lesson.reason ?? "A short lesson"}. About ${lesson.lesson.minutes} minutes.`,
+      href: `/learn/${lesson.lesson.id}`,
+      label: "Read the lesson",
+      symbol: "book",
+      rewardXp: XP_VALUES.lesson_completed + XP_VALUES.quiz_completed,
+    };
+  }
+
   return {
-    title: "Log another meal when you are ready",
+    title: "Log another meal when you're ready",
     why: "Small actions count. You can come back any time.",
     href: "/journal",
     label: "Log a meal",
+    symbol: "bowl",
   };
 }
 
@@ -218,21 +282,17 @@ export function buildToday(store: DemoStore, user: DemoUser, now = new Date()): 
   );
 
   const quests = questViews(store, user.id, today);
-  const open = quests
-    .filter((quest) => quest.status === "active")
-    .map((quest) => ({ ...quest, steps: questSteps(quest) }));
-  const started = open.filter((quest) => quest.steps.done > 0);
-  const pick = started[0] ?? open[0] ?? null;
+  // Ranked by progress, then by what the person's profile makes relevant.
+  const ranked = rankQuests(quests, user).filter((item) => item.status === "active");
+  const pick = ranked[0] ? { ...ranked[0], steps: questSteps(ranked[0]) } : null;
   const quest = pick ? { ...pick, presentation: QUEST_PRESENTATION[pick.id] } : null;
 
   const done = new Set(store.listLessonCompletions(user.id).map((item) => item.lessonId));
   const questLesson = quest?.presentation.action.href.startsWith("/learn/")
     ? quest.presentation.action.href.split("/").pop()
     : undefined;
-  const contexts = new Set(user.healthContextIds ?? []);
-  const candidates = LESSONS.filter((lesson) => !done.has(lesson.id) && lesson.id !== questLesson);
-  const matched = candidates.find((lesson) => lesson.contextIds.some((id) => contexts.has(id)));
-  const nextLesson = matched ?? candidates.find((lesson) => lesson.general) ?? null;
+  const rankedLesson = rankLessons(user, done).find((item) => !item.done && item.lesson.id !== questLesson) ?? null;
+  const nextLesson = rankedLesson?.lesson ?? null;
 
   const wins = unlockedAchievements(store, user.id);
   const latest = wins.at(-1);
@@ -247,7 +307,9 @@ export function buildToday(store: DemoStore, user: DemoUser, now = new Date()): 
         : "A new day on your HealthQuest.";
 
   return {
-    focus: focusForToday(store, user),
+    focus: focusForToday(store, user, { now, quest: pick, lesson: rankedLesson }),
+    reflection: weeklyReflection(store, user, today).lines,
+    profileSet: Boolean(user.profile?.updatedAt),
     firstName: firstNameFromEmail(user.email),
     greeting: greetingFor(hour),
     dateLabel: new Intl.DateTimeFormat("en-US", {
@@ -270,7 +332,7 @@ export function buildToday(store: DemoStore, user: DemoUser, now = new Date()): 
           title: nextLesson.title,
           minutes: nextLesson.minutes,
           rewardXp: XP_VALUES.lesson_completed + XP_VALUES.quiz_completed,
-          reason: matched ? "Picked for what you're exploring" : "One thing to learn",
+          reason: rankedLesson?.reason ?? "One thing to learn",
         }
       : null,
     recentWin: latest ? { title: latest.title, detail: latest.detail } : null,

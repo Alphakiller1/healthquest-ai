@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { HQIcon, type HQIconName } from "@/components/hq/icon";
+import { HQGlyph, HQIcon, type HQIconName } from "@/components/hq/icon";
 import { HQAchievementBadge, type Tier } from "@/components/hq/learning";
 import { HQPreferenceControls } from "@/components/hq/preferences";
 import { HQPath, HQSection, HQXp } from "@/components/hq/primitives";
@@ -43,6 +43,17 @@ export default async function YouPage() {
           <h1 className="hq-title">Your HealthQuest</h1>
           <p className="hq-secondary">{streak.message}</p>
         </header>
+
+        <Link href="/you/profile" className="hq-today__nudge" style={{ borderStyle: user.profile?.updatedAt ? "solid" : "dashed" }}>
+          <HQGlyph name="compass" tone="brand" />
+          <span>
+            <span className="hq-today__win-title">Your health profile</span>
+            <span className="hq-micro" style={{ display: "block" }}>
+              {user.profile?.updatedAt ? "Shaping your quests, lessons, and answers. Review or change it." : "Optional answers that size your quests and pick your lessons."}
+            </span>
+          </span>
+          <HQIcon name="chevron-right" size={18} className="hq-tint-muted" />
+        </Link>
 
         <HQSection title="Your trail" id="trail">
           <div className="hq-surface">

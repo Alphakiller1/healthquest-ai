@@ -7,15 +7,6 @@ import { HQAssistantResponse } from "@/components/hq/assistant-response";
 import { HQIcon } from "@/components/hq/icon";
 import { HQCallout, HQChip, HQLoader, HQSafetyBanner } from "@/components/hq/primitives";
 
-const PROMPTS = [
-  "What does family history mean for my health?",
-  "Why does saturated fat matter for cholesterol?",
-  "What are affordable foods with fiber?",
-  "What should I ask my doctor at my next visit?",
-  "What do the two blood pressure numbers mean?",
-  "How can I get more consistent sleep?",
-];
-
 const EMERGENCY_ACTIONS = {
   call_911: { label: "Call 911", href: "tel:911" },
   call_988: { label: "Call 988", href: "tel:988" },
@@ -31,11 +22,14 @@ export function AskClient({
   aiConfigured,
   aiEnabled,
   savingConversations,
+  prompts,
 }: {
   ask: (formData: FormData) => Promise<AskResult>;
   aiConfigured: boolean;
   aiEnabled: boolean;
   savingConversations: boolean;
+  /** Suggested questions, led by the person's own profile topics. */
+  prompts: string[];
 }) {
   const [thread, setThread] = useState<AskResult[]>([]);
   const [draft, setDraft] = useState("");
@@ -95,10 +89,10 @@ export function AskClient({
           </HQCallout>
           <section className="hq-stack" style={{ gap: 10 }} aria-labelledby="prompts-title">
             <h2 id="prompts-title" className="hq-label" style={{ margin: 0 }}>
-              Try one of these
+              Picked for you
             </h2>
             <div className="hq-prompts">
-              {PROMPTS.map((prompt) => (
+              {prompts.map((prompt) => (
                 <button key={prompt} type="button" className="hq-prompt" onClick={() => submit(prompt)} disabled={pending}>
                   {prompt}
                 </button>

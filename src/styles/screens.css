@@ -8,16 +8,21 @@
   gap: var(--hq-space-6);
 }
 
-.hq-today__greeting { order: 1; display: flex; flex-direction: column; gap: var(--hq-space-1); padding-top: var(--hq-space-2); }
+.hq-today__greeting { order: 1; display: flex; flex-direction: column; gap: var(--hq-space-1); padding-top: var(--hq-space-1); }
 .hq-today__greeting .hq-secondary { margin: var(--hq-space-1) 0 0; }
-.hq-today__journey { order: 2; display: flex; flex-direction: column; gap: var(--hq-space-3); }
-.hq-today__quest { order: 3; }
+.hq-today__quest { order: 2; }
+.hq-today__log { order: 3; display: flex; flex-direction: column; gap: var(--hq-space-3); }
 .hq-today__rail { display: contents; }
-.hq-today__log { order: 4; display: flex; flex-direction: column; gap: var(--hq-space-3); }
+.hq-today__journey { order: 4; display: flex; flex-direction: column; gap: var(--hq-space-3); }
 .hq-today__learn { order: 5; }
-.hq-today__ask { order: 6; }
-.hq-today__win { order: 7; }
-.hq-today__fine { order: 8; margin: 0; padding-top: var(--hq-space-4); border-top: 1px solid var(--hq-line); }
+.hq-today__nudge { order: 6; }
+.hq-today__ask { order: 7; }
+.hq-today__win { order: 8; }
+.hq-today__fine { order: 9; margin: 0; padding-top: var(--hq-space-4); border-top: 1px solid var(--hq-line); }
+
+/* The next step: full-width action on phones, thumb-reachable, one per screen */
+.hq-today__focus .hq-quest__actions { flex-direction: column; align-items: stretch; }
+.hq-today__focus .hq-quest__title { font-size: 1.375rem; }
 
 .hq-today__journey-head {
   display: flex;
@@ -29,21 +34,39 @@
 
 .hq-today__journey-head h2 { margin: 0; }
 
+.hq-today__reflection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: var(--hq-space-3) var(--hq-space-4);
+  border-radius: var(--hq-radius-md);
+  background: var(--hq-bg-soft);
+  list-style: none;
+  font-size: var(--hq-text-secondary-size);
+  color: var(--hq-text-secondary);
+}
+
 .hq-today__journey-foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: var(--hq-space-3);
+  gap: var(--hq-space-2) var(--hq-space-3);
   margin: 0;
 }
 
 .hq-today__journey-foot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hq-target);
   font-weight: var(--hq-weight-semibold);
   color: var(--hq-text-secondary);
 }
 
 .hq-today__log h2 { margin: 0; }
 
-.hq-today__win {
+.hq-today__win,
+.hq-today__nudge {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: var(--hq-space-3);
@@ -51,8 +74,20 @@
   padding: var(--hq-space-1) 0;
 }
 
-.hq-today__win:hover { text-decoration: none; }
-.hq-today__win:hover .hq-today__win-title { text-decoration: underline; }
+.hq-today__nudge {
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: var(--hq-space-3) var(--hq-space-4);
+  border: 1px dashed color-mix(in oklab, var(--hq-brand) 45%, transparent);
+  border-radius: var(--hq-radius-lg);
+  color: var(--hq-text-primary);
+  text-decoration: none;
+}
+
+.hq-today__win:hover,
+.hq-today__nudge:hover { text-decoration: none; }
+.hq-today__win:hover .hq-today__win-title,
+.hq-today__nudge:hover .hq-today__win-title { text-decoration: underline; }
 
 .hq-today__win-title {
   font-size: var(--hq-text-secondary-size);
@@ -65,8 +100,8 @@
     grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr);
     grid-template-areas:
       "greet greet"
-      "journey rail"
       "quest rail"
+      "log rail"
       "fine fine";
     grid-template-rows: auto auto 1fr auto;
     column-gap: var(--hq-space-10);
@@ -75,9 +110,11 @@
   }
 
   .hq-today__greeting { grid-area: greet; padding-top: 0; }
-  .hq-today__journey { grid-area: journey; }
   .hq-today__quest { grid-area: quest; }
+  .hq-today__log { grid-area: log; }
   .hq-today__fine { grid-area: fine; max-width: 48rem; }
+  .hq-today__focus .hq-quest__actions { flex-direction: row; align-items: center; }
+  .hq-today__focus .hq-quest__actions > * { flex: 0 0 auto; width: auto; }
 
   .hq-today__rail {
     grid-area: rail;
@@ -660,4 +697,127 @@ button.hq-prompt:hover { border-color: var(--hq-line-strong); background: var(--
   padding: var(--hq-space-5);
   border: 1px solid color-mix(in oklab, var(--hq-emergency) 45%, transparent);
   border-radius: var(--hq-radius-lg);
+}
+
+/* ───────── Health profile ───────── */
+
+.hq-profile-section {
+  border-bottom: 1px solid var(--hq-line);
+}
+
+.hq-profile-section > summary {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--hq-space-3);
+  min-height: 60px;
+  padding: var(--hq-space-3) 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.hq-profile-section > summary::-webkit-details-marker { display: none; }
+
+.hq-profile-section__title {
+  font-weight: var(--hq-weight-semibold);
+  line-height: 1.3;
+}
+
+.hq-profile-section__current {
+  max-width: 9.5rem;
+  overflow: hidden;
+  font-size: var(--hq-text-label);
+  color: var(--hq-text-muted);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hq-profile-section > summary .hq-icon {
+  color: var(--hq-text-muted);
+  transition: transform var(--hq-motion-normal) var(--hq-ease-out);
+}
+
+.hq-profile-section[open] > summary .hq-icon { transform: rotate(90deg); }
+
+.hq-profile-section[open] > fieldset {
+  padding-bottom: var(--hq-space-5);
+  animation: hq-fade-in var(--hq-motion-normal) var(--hq-ease-out);
+}
+
+/* Save stays in reach, above the tab bar on phones */
+.hq-profile-save {
+  position: sticky;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: flex;
+  margin: 0 calc(-1 * var(--hq-gutter));
+  padding: var(--hq-space-4) var(--hq-gutter) var(--hq-space-3);
+  background: linear-gradient(to top, var(--hq-bg-canvas) 75%, transparent);
+}
+
+.hq-profile-save .hq-btn { flex: 1; }
+
+@media (min-width: 1024px) {
+  .hq-profile-save { bottom: 0; margin: 0; padding: var(--hq-space-5) 0; }
+  .hq-profile-save .hq-btn { flex: 0 0 auto; }
+}
+
+/* ───────── Print (visit list) ───────── */
+
+@media print {
+  .hq-sidebar,
+  .hq-topbar,
+  .hq-tabbar,
+  .hq-print-hide,
+  .hq-page-head .hq-secondary { display: none !important; }
+  body { background: #fff; color: #000; }
+  .hq-shell[data-nav="true"] { display: block; }
+  .hq-shell__content { padding: 0 !important; }
+  .hq-log-item { break-inside: avoid; border-color: #bbb; }
+}
+
+/* ───────── Mobile ergonomics ───────── */
+
+/* No double-tap zoom delay on anything tappable */
+:where(a, button, label, summary, input, select, textarea) {
+  touch-action: manipulation;
+}
+
+/* Notch and home-indicator safe areas (viewport-fit=cover) */
+.hq-topbar {
+  padding-top: env(safe-area-inset-top);
+  height: calc(56px + env(safe-area-inset-top));
+}
+
+@media (max-width: 1023px) {
+  .hq-main {
+    padding-left: max(var(--hq-gutter), env(safe-area-inset-left));
+    padding-right: max(var(--hq-gutter), env(safe-area-inset-right));
+  }
+}
+
+/* Every small tap target reaches 44px */
+.hq-recent button,
+.hq-prompt {
+  min-height: var(--hq-target);
+}
+
+.hq-section__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hq-target);
+}
+
+/* Nothing changes on focus: moving or revealing anything on blur would put a
+ * different element under a finger mid-tap. The keyboard resizes the page instead
+ * (viewport interactive-widget=resizes-content). */
+
+
+/* Inline links that stand alone on a line still get a full-size tap area */
+.hq-source a,
+.hq-ask-screen__composer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hq-target);
 }

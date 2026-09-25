@@ -2,6 +2,8 @@ import type { DemoUser } from "@/lib/demo/store";
 import { selectEvidence } from "@/lib/evidence/select";
 import { resolveCoachingMode, shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
 import { buildMinimalAssistantInput } from "@/lib/privacy/payload";
+import { excludedFoods } from "@/lib/profile/profile";
+import { profileTopics } from "@/lib/profile/personalize";
 import type { SafeAssistantInput, SafeFoodContext } from "./types";
 
 /**
@@ -20,6 +22,8 @@ export function prepareAssistantInput(user: DemoUser, message: string, food?: Sa
     goals: user.goals,
     coachingMode,
     gentleFoodMode,
+    profileTopics: profileTopics(user),
+    excludeWords: excludedFoods(user.profile),
   });
   const claims = evidence.claims.map(({ id, sourceId, kind, claim }) => ({ id, sourceId, kind, claim }));
   return buildMinimalAssistantInput({

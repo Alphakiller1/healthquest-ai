@@ -3,6 +3,7 @@
 import { useRef, useState, type ReactNode, type RefObject } from "react";
 import { HQIcon, type HQIconName } from "@/components/hq/icon";
 import { HQButton, HQCallout, HQChoice, HQPath } from "@/components/hq/primitives";
+import { ACTIVITY_BASELINES, BUDGETS } from "@/lib/profile/profile";
 
 type Option = { id: string; label: string };
 type FormAction = (formData: FormData) => void | Promise<void>;
@@ -15,7 +16,9 @@ const GOAL_SYMBOLS: Record<string, HQIconName> = {
   prepare_for_visit: "question",
 };
 
-const STEPS = ["About you", "Goals", "Food", "Consent"] as const;
+const STEPS = ["About you", "Goals", "Food", "Routine", "Consent"] as const;
+
+const ROUTINE_STEP = 3;
 
 /**
  * One question per screen, with a reason for every question. All steps live
@@ -112,7 +115,28 @@ export function OnboardingFlow({
         </div>
       </Step>
 
-      <Step index={3} step={step} headingRef={headingRef} question="A few agreements before we begin" why="Each one is required so we can store what you log and explain it. You can export or delete your data in Settings.">
+      <Step
+        index={ROUTINE_STEP}
+        step={step}
+        headingRef={headingRef}
+        question="A little about your routine"
+        why="Optional. It sizes your weekly quests to where you are now, so nobody starts behind. You can change it any time in your health profile."
+      >
+        <fieldset className="hq-stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
+          <legend className="hq-field__label" style={{ marginBottom: 4 }}>How often do you move now?</legend>
+          {ACTIVITY_BASELINES.map((option) => (
+            <HQChoice key={option.id} type="radio" name="activityBaseline" value={option.id} label={option.label} hint={option.hint} />
+          ))}
+        </fieldset>
+        <fieldset className="hq-stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
+          <legend className="hq-field__label" style={{ margin: "8px 0 4px" }}>How is your grocery budget?</legend>
+          {BUDGETS.map((option) => (
+            <HQChoice key={option.id} type="radio" name="budget" value={option.id} label={option.label} hint={option.hint} />
+          ))}
+        </fieldset>
+      </Step>
+
+      <Step index={4} step={step} headingRef={headingRef} question="A few agreements before we begin" why="Each one is required so we can store what you log and explain it. You can export or delete your data in Settings.">
         <div className="hq-onboard__choices">
           <HQChoice name="aiConsent" required icon="compass" label="Relevant text I submit to the assistant may be processed by a third-party AI provider." />
           <HQChoice name="healthDataConsent" required icon="shield" label="HealthQuest may store the health and wellness details I choose to enter." />
@@ -138,6 +162,11 @@ export function OnboardingFlow({
             Continue
           </HQButton>
         )}
+        {step === ROUTINE_STEP ? (
+          <HQButton type="button" variant="quiet" onClick={() => go(step + 1)}>
+            Skip
+          </HQButton>
+        ) : null}
       </div>
     </form>
   );

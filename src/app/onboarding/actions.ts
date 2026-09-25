@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { readSession } from "@/lib/demo/session";
 import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { completeOnboarding } from "@/lib/journey/onboarding";
+import { parseProfileForm } from "@/lib/profile/profile";
 
 async function submitOnboardingAction(formData: FormData) {
   const session = await readSession();
@@ -23,7 +24,11 @@ async function submitOnboardingAction(formData: FormData) {
   });
   if (result.status === "under_18") redirect("/onboarding?stopped=age");
   if (result.status === "invalid") redirect("/onboarding?error=form");
-  redirect("/dashboard");
+  // Optional routine answers seed the health profile; skipping leaves it empty.
+  const profile = parseProfileForm(formData);
+  const saved = store.getUser(user.id);
+  if (saved && (profile.activityBaseline || profile.budget)) store.saveUser({ ...saved, profile });
+  redirect("/today");
 }
 
 export const submitOnboarding = withPersist(submitOnboardingAction);

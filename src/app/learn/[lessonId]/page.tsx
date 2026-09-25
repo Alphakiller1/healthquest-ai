@@ -1,11 +1,23 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getActiveSource } from "@/lib/evidence/registry";
+import { HQIcon } from "@/components/hq/icon";
+import { HQLessonFeature } from "@/components/hq/learning";
+import { HQButton, HQCallout, HQChoice, HQXp } from "@/components/hq/primitives";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
+import { getDemoStore } from "@/lib/demo/store";
+import { getActiveSource } from "@/lib/evidence/registry";
+import { XP_VALUES } from "@/lib/gamification/xp";
 import { getLesson } from "@/lib/learn/lessons";
+import { rankLessons } from "@/lib/profile/personalize";
 import { submitLesson } from "../actions";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ lessonId: string }> }): Promise<Metadata> {
+  const lesson = getLesson((await params).lessonId);
+  return { title: lesson ? `${lesson.title} · HealthQuest` : "Lesson · HealthQuest" };
+}
 
 export default async function LessonPage({
   params,
@@ -19,40 +31,111 @@ export default async function LessonPage({
   const lesson = getLesson(lessonId);
   if (!lesson) notFound();
   const query = await searchParams;
+  const done = new Set((await getDemoStore()).listLessonCompletions(user.id).map((item) => item.lessonId));
+  const next = query.result === "correct" ? rankLessons(user, done).find((item) => !item.done && item.lesson.id !== lesson.id) : undefined;
+  const sources = lesson.sourceIds.map((id) => getActiveSource(id)).filter((source): source is NonNullable<typeof source> => Boolean(source));
+
+  const takeaway = (
+    <aside className="hq-takeaway" aria-label="Key takeaway">
+      <p className="hq-label" style={{ color: "var(--hq-sun-ink)", marginBottom: 6 }}>
+        The takeaway
+      </p>
+      <p className="hq-reading" style={{ margin: 0 }}>
+        {lesson.takeaway}
+      </p>
+    </aside>
+  );
+
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-6 py-12">
-      <Link href="/learn" className="text-teal-800 underline">All lessons</Link>
-      <h1 className="text-3xl font-semibold tracking-tight">{lesson.title}</h1>
-      <p className="text-sm text-zinc-600">{lesson.minutes} minute read</p>
-      {user.plainLanguage ? <p className="leading-7 font-medium">{lesson.takeaway}</p> : null}
-      <p className="leading-7">{lesson.body}</p>
-      {user.plainLanguage ? null : <p className="leading-7 font-medium">{lesson.takeaway}</p>}
-      <ul className="list-disc pl-5">
-        {lesson.sourceIds.map((id) => {
-          const source = getActiveSource(id);
-          if (!source) return null;
-          return (
-            <li key={id}>
-              <a className="underline" href={source.url}>{source.organization}: {source.title}</a>
-            </li>
-          );
-        })}
-      </ul>
-      {query.result === "correct" ? <p>Quiz recorded. Points were awarded once for this lesson.</p> : null}
-      {query.result === "retry" ? <p>The lesson is saved. You can try the question again for the quiz points.</p> : null}
-      <form action={submitLesson} className="flex flex-col gap-3">
-        <input type="hidden" name="lessonId" value={lesson.id} />
-        <fieldset className="flex flex-col gap-2">
-          <legend className="font-medium">{lesson.quiz.prompt}</legend>
-          {lesson.quiz.choices.map((choice, index) => (
-            <label key={choice} className="flex items-start gap-3">
-              <input className="mt-1 h-5 w-5" type="radio" name="answer" value={index} required />
-              {choice}
-            </label>
-          ))}
-        </fieldset>
-        <button className="h-12 rounded-full bg-teal-800 px-5 text-white" type="submit">Save lesson</button>
-      </form>
+    <main className="hq-main">
+      <article className="hq-reader">
+        <header className="hq-stack" style={{ gap: 12 }}>
+          <Link href="/learn" className="hq-section__action hq-cluster" style={{ gap: 4, padding: 0 }}>
+            <HQIcon name="chevron-left" size={16} /> All lessons
+          </Link>
+          <h1 className="hq-reader__title">{lesson.title}</h1>
+          <p className="hq-cluster hq-micro" style={{ gap: 12, margin: 0 }}>
+            <span className="hq-cluster" style={{ gap: 4 }}>
+              <HQIcon name="clock" size={14} /> {lesson.minutes} minute read
+            </span>
+            {done.has(lesson.id) ? (
+              <span className="hq-cluster" style={{ gap: 4 }}>
+                <HQIcon name="check" size={14} /> Read
+              </span>
+            ) : (
+              <HQXp value={XP_VALUES.lesson_completed + XP_VALUES.quiz_completed} reward />
+            )}
+          </p>
+        </header>
+
+        {user.plainLanguage ? takeaway : null}
+
+        <div className="hq-reader__body hq-reading">
+          <p>{lesson.body}</p>
+        </div>
+
+        {user.plainLanguage ? null : takeaway}
+
+        {sources.length > 0 ? (
+          <section className="hq-stack" style={{ gap: 8 }} aria-labelledby="sources-title">
+            <h2 id="sources-title" className="hq-label" style={{ margin: 0 }}>
+              Sources
+            </h2>
+            <ol className="hq-sources">
+              {sources.map((source) => (
+                <li key={source.id} className="hq-source">
+                  <a href={source.url} rel="noreferrer">
+                    {source.organization}: {source.title}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+
+        {query.result === "correct" ? (
+          <div role="status">
+            <HQCallout tone="positive" title="Quiz recorded">
+              That&rsquo;s one more thing you understand about your health. Points were awarded once for this lesson.
+            </HQCallout>
+          </div>
+        ) : null}
+        {query.result === "retry" ? (
+          <div role="status">
+            <HQCallout tone="sun" title="Lesson saved">
+              Not quite — have another look at the takeaway and try the question again whenever you like.
+            </HQCallout>
+          </div>
+        ) : null}
+
+        {next ? (
+          <section className="hq-stack" style={{ gap: 8 }} aria-label="Next lesson">
+            <HQLessonFeature
+              href={`/learn/${next.lesson.id}`}
+              lesson={{
+                id: next.lesson.id,
+                title: next.lesson.title,
+                minutes: next.lesson.minutes,
+                rewardXp: XP_VALUES.lesson_completed + XP_VALUES.quiz_completed,
+                reason: next.reason ?? "Next up for you",
+              }}
+            />
+          </section>
+        ) : (
+          <form action={submitLesson} className="hq-quiz">
+            <input type="hidden" name="lessonId" value={lesson.id} />
+            <fieldset className="hq-stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
+              <legend>{lesson.quiz.prompt}</legend>
+              {lesson.quiz.choices.map((choice, index) => (
+                <HQChoice key={choice} type="radio" name="answer" value={String(index)} label={choice} required />
+              ))}
+            </fieldset>
+            <HQButton type="submit" variant="primary" block icon="check">
+              Save lesson
+            </HQButton>
+          </form>
+        )}
+      </article>
     </main>
   );
 }

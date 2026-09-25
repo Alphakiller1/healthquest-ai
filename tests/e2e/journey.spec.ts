@@ -13,6 +13,9 @@ test("adult can onboard, log, learn, export, see an emergency screen, and delete
   await page.getByRole("checkbox", { name: "Understand how meals fit what I want to learn" }).check();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
+  // Routine is optional: choose a baseline so the profile is seeded.
+  await page.getByRole("radio", { name: /Some days/ }).check();
+  await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("checkbox", { name: /third-party AI provider/ }).check();
   await page.getByRole("checkbox", { name: /store the health and wellness/ }).check();
   await page.getByRole("checkbox", { name: /privacy commitment/ }).check();

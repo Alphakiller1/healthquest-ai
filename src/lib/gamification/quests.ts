@@ -1,4 +1,5 @@
 import type { DemoStore } from "@/lib/demo/store";
+import { movementTarget, sleepNightsTarget } from "@/lib/profile/profile";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { questPeriod } from "@/lib/gamification/quest-period";
 
@@ -23,6 +24,9 @@ export function questViews(store: DemoStore, userId: string, today = nyToday()):
   const period = questPeriod(today);
   const user = store.getUser(userId);
   const skipped = new Set(user?.skippedQuestIds ?? []);
+  // Targets come from the person's own profile: their chosen weekly goal, sized to their baseline.
+  const moveTarget = movementTarget(user?.profile);
+  const sleepTarget = sleepNightsTarget(user?.profile);
   const lessons = new Set(
     store
       .listLessonCompletions(userId)
@@ -47,9 +51,9 @@ export function questViews(store: DemoStore, userId: string, today = nyToday()):
     {
       id: "move-week",
       title: "Move quest",
-      detail: "Log one movement session you chose.",
-      progress: activities > 0 ? "1 session logged" : "0 sessions logged",
-      status: activities > 0 ? "completed" : "active",
+      detail: moveTarget === 1 ? "Log one movement session you chose." : `Log ${moveTarget} movement sessions you chose.`,
+      progress: `${Math.min(activities, moveTarget)} of ${moveTarget} ${moveTarget === 1 ? "session" : "sessions"} logged`,
+      status: activities >= moveTarget ? "completed" : "active",
     },
     {
       id: "budget-meals",
@@ -61,9 +65,9 @@ export function questViews(store: DemoStore, userId: string, today = nyToday()):
     {
       id: "sleep-notes",
       title: "Sleep quest",
-      detail: "Record sleep duration on two nights.",
-      progress: `${Math.min(sleepNights, 2)} of 2 nights with sleep`,
-      status: sleepNights >= 2 ? "completed" : "active",
+      detail: `Record sleep duration on ${sleepTarget === 2 ? "two" : "three"} nights.`,
+      progress: `${Math.min(sleepNights, sleepTarget)} of ${sleepTarget} nights with sleep`,
+      status: sleepNights >= sleepTarget ? "completed" : "active",
     },
     {
       id: "heart-lesson",

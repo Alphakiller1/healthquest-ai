@@ -19,11 +19,19 @@ const serif = Newsreader({
 
 export const metadata: Metadata = {
   title: "HealthQuest AI",
+  applicationName: "HealthQuest",
+  appleWebApp: { capable: true, title: "HealthQuest", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
   description:
     "Educational wellness guidance for adults. Not medical advice, diagnosis, or treatment.",
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Content sits inside notches and home indicators; the keyboard resizes the page instead of covering it.
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f4f1e9" },
     { media: "(prefers-color-scheme: dark)", color: "#111714" },

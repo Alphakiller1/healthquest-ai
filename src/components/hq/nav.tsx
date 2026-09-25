@@ -7,7 +7,8 @@ import { HQIcon, type HQIconName } from "./icon";
 
 export const DESTINATIONS: { href: string; label: string; icon: HQIconName; match: string[] }[] = [
   { href: "/today", label: "Today", icon: "today", match: ["/today", "/dashboard"] },
-  { href: "/journal", label: "Meals", icon: "journal", match: ["/journal", "/move", "/habits"] },
+  { href: "/journal", label: "Journal", icon: "journal", match: ["/journal", "/move", "/habits"] },
+  { href: "/ask", label: "Ask", icon: "compass", match: ["/ask"] },
   { href: "/learn", label: "Learn", icon: "book", match: ["/learn"] },
   { href: "/you", label: "You", icon: "person", match: ["/you", "/settings", "/health-factors", "/visit", "/quests"] },
 ];
@@ -40,9 +41,6 @@ export function HQTopBar({ trailing }: { trailing?: ReactNode }) {
       <HQBrand />
       <div className="hq-cluster">
         {trailing}
-        <Link className="hq-icon-btn" href="/ask" aria-label="Ask HealthQuest">
-          <HQIcon name="compass" size={22} />
-        </Link>
       </div>
     </header>
   );
@@ -85,10 +83,6 @@ export function HQSidebar({ footer }: { footer?: ReactNode }) {
           </Link>
         ))}
       </nav>
-      <Link className="hq-btn hq-btn--block" href="/ask" aria-current={isActive(["/ask"]) ? "page" : undefined}>
-        <HQIcon name="compass" />
-        Ask HealthQuest
-      </Link>
       {footer ? <div className="hq-sidebar__foot">{footer}</div> : null}
     </aside>
   );
