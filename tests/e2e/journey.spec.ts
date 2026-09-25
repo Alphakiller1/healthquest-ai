@@ -23,6 +23,8 @@ test("adult can onboard, log, learn, export, see an emergency screen, and delete
   await page.getByRole("button", { name: "Begin my HealthQuest" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening)/ })).toBeVisible();
   await expect(page.getByRole("list", { name: /This week/ })).toBeVisible();
+  // The shell lives in the root layout; it must show the tabs right after onboarding, without a reload.
+  await expect(page.locator(".hq-tabbar").getByRole("link", { name: "Now" })).toBeVisible();
 
   await page.goto("/journal");
   await page.getByRole("textbox", { name: "Food", exact: true }).fill("rolled oats");

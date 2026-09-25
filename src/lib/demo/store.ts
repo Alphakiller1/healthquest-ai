@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { revalidatePath } from "next/cache";
 import { cache } from "react";
 import { dataDir } from "@/lib/demo/data-dir";
 import type { HealthProfile } from "@/lib/profile/profile";
@@ -420,6 +421,13 @@ export function withPersist<Args extends unknown[], Result>(
       if (config && scope.snapshot) {
         const snapshot = await scope.snapshot;
         if (snapshot.dirty) await redisSet(config, REDIS_KEY, JSON.stringify(snapshot.db));
+      }
+      // The app shell (nav, XP) lives in the root layout, which Next keeps across
+      // navigations. Refresh it so a finished onboarding shows the tabs and new XP shows at once.
+      try {
+        revalidatePath("/", "layout");
+      } catch {
+        // Outside a Next request (unit tests) there is nothing to refresh.
       }
     }
   };
