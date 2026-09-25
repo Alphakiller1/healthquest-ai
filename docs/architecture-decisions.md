@@ -71,3 +71,7 @@ Requests use `text.format` with a strict JSON schema (optional fields required-b
 ## 2026-09-25 — Mobile: nothing moves on focus
 
 An attempt to hide the tab bar and re-pin composers while typing caused taps to land on the wrong element: the field blurs on pointer-down, the layout changes, and the pointer-up hits something else. The e2e journey caught it. The rule now: no layout change on focus or blur. The viewport uses `interactive-widget=resizes-content` and `viewport-fit=cover`, safe-area insets pad the top bar and page, all standalone tap targets are at least 44px, and a web app manifest plus icons let people add HealthQuest to their home screen. There is deliberately no service worker, so no health data is cached offline.
+
+## 2026-09-25 — Production uses USDA's DEMO_KEY until a registered key is added
+
+Food lookup on the tester deployment uses USDA's published `DEMO_KEY`: real FoodData Central data, capped at 30 requests an hour and 50 a day. The app already stops at the hourly cap and shows a "busy" message instead of guessing, and caches matched foods by FoodData Central id. Replace it with a free registered key (1,000 requests an hour) in Vercel's `USDA_FOODDATA_API_KEY` before inviting more than a handful of testers.
