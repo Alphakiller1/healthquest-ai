@@ -146,6 +146,8 @@ const TODAY_FIXTURE: TodayModel = {
     rewardXp: 10,
   },
   profileSet: true,
+  tip: { text: "Any amount of physical activity has some health benefits.", organization: "HHS ODPHP", url: "https://odphp.health.gov/" },
+  moment: { id: "morning", title: "Start the day gently", body: "One slow minute of breathing before the day picks up.", href: "/now/calm?tool=breathe", label: "Breathe for a minute" },
   reflection: ["You showed up on 2 days this week.", "3 meals logged.", "Sleep noted on 2 nights, averaging 6.5 hours."],
   activeDaysThisWeek: 2,
   xp: 185,

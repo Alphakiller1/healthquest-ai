@@ -147,6 +147,7 @@ export type WeeklyReflection = {
   sleepNights: number;
   averageSleep: number | null;
   lessons: number;
+  moments: number;
   lines: string[];
 };
 
@@ -165,6 +166,9 @@ export function weeklyReflection(store: DemoStore, user: DemoUser, today = usCal
     .map((habit) => habit.sleepHours as number);
   const lessons = store.listLessonCompletions(user.id).filter((item) => inWeek(usCalendarDate(item.completedAt))).length;
   const activeDays = new Set(engagementDates(store, user.id).filter(inWeek)).size;
+  const moments = store
+    .listXp(user.id)
+    .filter((event) => event.eventType === "moment_completed" && inWeek(event.sourceEntityId.split(":")[1] ?? "")).length;
   const movementMinutes = activities.reduce((sum, item) => sum + item.durationMinutes, 0);
   const averageSleep = sleep.length ? Math.round((sleep.reduce((a, b) => a + b, 0) / sleep.length) * 10) / 10 : null;
 
@@ -174,10 +178,11 @@ export function weeklyReflection(store: DemoStore, user: DemoUser, today = usCal
     lines.push("Nothing logged yet this week. Your week starts whenever you do.");
   } else {
     lines.push(`You showed up on ${plural(activeDays, "day")} this week.`);
-    if (activities.length) lines.push(`${plural(activities.length, "movement session")}, ${movementMinutes} minutes in all.`);
+    if (activities.length) lines.push(`${plural(activities.length, "movement session")}, ${plural(movementMinutes, "minute")} in all.`);
     if (meals) lines.push(`${plural(meals, "meal")} logged.`);
     if (averageSleep !== null) lines.push(`Sleep noted on ${plural(sleep.length, "night")}, averaging ${averageSleep} hours.`);
     if (lessons) lines.push(`${plural(lessons, "lesson")} finished.`);
+    if (moments) lines.push(`${plural(moments, "moment")} taken for yourself.`);
   }
-  return { activeDays, meals, movementSessions: activities.length, movementMinutes, sleepNights: sleep.length, averageSleep, lessons, lines };
+  return { activeDays, meals, movementSessions: activities.length, movementMinutes, sleepNights: sleep.length, averageSleep, lessons, moments, lines };
 }

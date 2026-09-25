@@ -8,7 +8,7 @@ import { HQIcon, type HQIconName } from "./icon";
 export const DESTINATIONS: { href: string; label: string; icon: HQIconName; match: string[] }[] = [
   { href: "/today", label: "Today", icon: "today", match: ["/today", "/dashboard"] },
   { href: "/journal", label: "Journal", icon: "journal", match: ["/journal", "/move", "/habits"] },
-  { href: "/ask", label: "Ask", icon: "compass", match: ["/ask"] },
+  { href: "/now", label: "Now", icon: "compass", match: ["/now", "/ask"] },
   { href: "/learn", label: "Learn", icon: "book", match: ["/learn"] },
   { href: "/you", label: "You", icon: "person", match: ["/you", "/settings", "/health-factors", "/visit", "/quests"] },
 ];

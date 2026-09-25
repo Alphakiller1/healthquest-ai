@@ -5,20 +5,27 @@ import { HQToast } from "@/components/hq/feedback";
 import { HQGlyph, HQIcon } from "@/components/hq/icon";
 import { HQLessonFeature } from "@/components/hq/learning";
 import { HQButton, HQButtonLink, HQPath, HQXp, stepsToNodes } from "@/components/hq/primitives";
+import { encouragement } from "@/lib/moments/encouragement";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
 
 export type TodayNotice = "checkin" | "skipped" | null;
 
 const NOTICES: Record<Exclude<TodayNotice, null>, { message: string; xp?: number }> = {
-  checkin: { message: "Checked in. One step forward.", xp: 5 },
+  checkin: { message: encouragement("checkin", new Date().toDateString()), xp: 5 },
   skipped: { message: "Set aside for this week. No penalty." },
 };
 
-const QUICK = [
-  { href: "/journal", label: "Meal", hint: "What you had", icon: "bowl", tone: "sun" },
-  { href: "/move", label: "Movement", hint: "Any kind", icon: "motion", tone: "brand" },
-  { href: "/habits", label: "Rest", hint: "Sleep, notes", icon: "moon", tone: "night" },
+const RIGHT_NOW = [
+  { href: "/now/food", label: "Choose food", hint: "Tips or compare", icon: "bowl", tone: "sun" },
+  { href: "/now/move", label: "Move a little", hint: "Fits your time", icon: "motion", tone: "brand" },
+  { href: "/now/calm", label: "Feel calmer", hint: "One minute", icon: "moon", tone: "night" },
+] as const;
+
+const LOG = [
+  { href: "/journal", label: "Meal", icon: "bowl" },
+  { href: "/move", label: "Movement", icon: "motion" },
+  { href: "/habits", label: "Sleep & notes", icon: "moon" },
 ] as const;
 
 /**
@@ -101,12 +108,12 @@ export function TodayScreen({
           </article>
         </section>
 
-        <section className="hq-today__log" aria-labelledby="log-title">
-          <h2 id="log-title" className="hq-label">
-            Log in one tap
+        <section className="hq-today__log" aria-labelledby="now-title">
+          <h2 id="now-title" className="hq-label">
+            Right now
           </h2>
           <div className="hq-quick-grid">
-            {QUICK.map((item) => (
+            {RIGHT_NOW.map((item) => (
               <Link key={item.href} className="hq-quick" href={item.href}>
                 <HQGlyph name={item.icon} tone={item.tone} />
                 <span className="hq-quick__label">
@@ -116,6 +123,14 @@ export function TodayScreen({
               </Link>
             ))}
           </div>
+          <nav className="hq-recent" aria-label="Log something">
+            {LOG.map((item) => (
+              <Link key={item.href} href={item.href} className="hq-log-chip">
+                <HQIcon name="plus" size={14} />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </section>
 
         <div className="hq-today__rail">
@@ -165,6 +180,29 @@ export function TodayScreen({
               </Link>
             </p>
           </section>
+
+          <Link href={model.moment.href} className="hq-today__nudge hq-today__moment" style={{ borderStyle: "solid" }}>
+            <HQGlyph name={model.moment.id === "midday" ? "motion" : model.moment.id === "morning" ? "sun" : "moon"} tone="brand" />
+            <span>
+              <span className="hq-today__win-title">{model.moment.title}</span>
+              <span className="hq-micro" style={{ display: "block" }}>
+                {model.moment.body}
+              </span>
+            </span>
+            <HQIcon name="chevron-right" size={18} className="hq-tint-muted" />
+          </Link>
+
+          {model.tip ? (
+            <aside className="hq-takeaway hq-today__tip" aria-labelledby="tip-title">
+              <p id="tip-title" className="hq-label" style={{ color: "var(--hq-sun-ink)", marginBottom: 6 }}>
+                Today&rsquo;s tip
+              </p>
+              <p style={{ margin: 0 }}>{model.tip.text}</p>
+              <p className="hq-micro" style={{ margin: "6px 0 0" }}>
+                <a href={model.tip.url}>{model.tip.organization}</a>
+              </p>
+            </aside>
+          ) : null}
 
           {model.lesson && !lessonIsFocus ? (
             <div className="hq-today__learn">

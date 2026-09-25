@@ -8,6 +8,7 @@ import { activeClaims } from "@/lib/evidence/claims";
 import { profileTopics } from "@/lib/profile/personalize";
 import { CRISIS_MESSAGE, MEDICAL_EMERGENCY_MESSAGE } from "@/lib/safety/responses";
 import { removeVisitQuestion, saveVisitQuestion } from "./actions";
+import { encouragement } from "@/lib/moments/encouragement";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +69,9 @@ export default async function VisitPage({
         ) : null}
         {params.saved ? (
           <div role="status">
-            <HQCallout tone="positive">Saved. Bring this list to your visit.</HQCallout>
+              <HQCallout tone="positive" title={encouragement("question", questions.length)}>
+                Bring this list to your visit.
+              </HQCallout>
           </div>
         ) : null}
         {params.error ? (

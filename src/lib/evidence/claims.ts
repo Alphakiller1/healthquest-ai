@@ -88,6 +88,18 @@ export const EVIDENCE_CLAIMS: readonly EvidenceClaim[] = [
   c("move.boundary", "odphp-physical-activity", ["movement", "calories burned", "exercise"], "boundary",
     "HealthQuest records the activity and duration you enter. It does not calculate calories burned or decide whether a session was enough."),
 
+  // Movement guidelines, quoted closely from ODPHP's "Top 10 things to know" (checked 2026-09-25)
+  c("move.sit_less", "odphp-top-10", ["movement", "sitting", "desk", "exercise"], "pattern",
+    "The first key guideline for adults is to move more and sit less."),
+  c("move.any_amount", "odphp-top-10", ["movement", "exercise", "walk", "short", "time"], "pattern",
+    "Any amount of physical activity has some health benefits."),
+  c("move.short_bouts", "odphp-top-10", ["movement", "short", "time", "minutes", "busy"], "explain",
+    "Short bouts count. Activity no longer has to come in 10-minute blocks, so moving more often through the day adds up."),
+  c("move.weekly", "odphp-top-10", ["movement", "exercise", "how much", "minutes", "week"], "explain",
+    "The guidelines describe 150 to 300 minutes a week of moderate-intensity activity, like brisk walking or fast dancing, for adults. Any amount below that still has benefits."),
+  c("move.strength", "odphp-top-10", ["movement", "strength", "muscle", "weights", "push-ups"], "explain",
+    "The guidelines also describe muscle-strengthening activity, like lifting weights or push-ups, at least 2 days a week."),
+
   // Family history
   c("family.what", "medlineplus-family-history", ["family history", "genetics", "relatives", "parents", "inherited"], "explain",
     "Family history is health information about you and your close relatives. Families share genes, surroundings, and habits."),
@@ -129,6 +141,17 @@ export const EVIDENCE_CLAIMS: readonly EvidenceClaim[] = [
     "Ideas that may help with stress include keeping a journal, moving, eating regular meals, keeping a sleep routine, and talking with people who help."),
   c("stress.professional", "nimh-stress", ["stress", "anxiety", "mental health", "therapy"], "ask",
     "If stress or anxiety gets in the way of daily life, it may be time to talk with a professional."),
+  // Coping ideas, quoted closely from NIMH's "I'm So Stressed Out!" fact sheet (checked 2026-09-25)
+  c("stress.relax", "nimh-stress", ["stress", "anxiety", "calm", "breathing", "relax", "mindfulness"], "practical",
+    "Relaxation exercises, such as deep breathing or visualization, and mindfulness — actively paying attention to the present moment — are among NIMH's ideas for coping with stress."),
+  c("stress.connect", "nimh-stress", ["stress", "lonely", "sad", "support", "friends", "family"], "practical",
+    "Reaching out to friends or family members who help you cope in a positive way is one of NIMH's ideas for coping with stress."),
+  c("stress.thoughts", "nimh-stress", ["stress", "anxiety", "thoughts", "worried", "negative"], "practical",
+    "Noticing and challenging negative, unhelpful thoughts is another idea NIMH lists for coping with stress."),
+  c("stress.caffeine", "nimh-stress", ["stress", "anxiety", "caffeine", "coffee", "soda"], "practical",
+    "Avoiding excess caffeine, such as soft drinks or coffee, is on NIMH's list of ways to cope with stress."),
+  c("stress.journal", "nimh-stress", ["stress", "journal", "writing", "reflect"], "practical",
+    "Keeping a journal is one of NIMH's ideas for coping with stress."),
   c("crisis.988", "988-lifeline", ["crisis", "988", "suicide", "distress", "hotline"], "boundary",
     "In the U.S., you can call or text 988 to reach the Suicide & Crisis Lifeline any time."),
 

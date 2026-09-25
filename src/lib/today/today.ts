@@ -7,6 +7,8 @@ import { questViews, type QuestView } from "@/lib/gamification/quests";
 import { XP_VALUES, totalXp } from "@/lib/gamification/xp";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { rankLessons, rankQuests, weeklyReflection, type RankedLesson, type RankedQuest } from "@/lib/profile/personalize";
+import { dailyTip, momentForHour, type DayMoment } from "@/lib/moments/daily";
+import { getActiveSource } from "@/lib/evidence/registry";
 
 /*
  * Everything the Today screen shows, derived from the store in one place.
@@ -114,6 +116,10 @@ export type TodayModel = {
   reflection: string[];
   /** Whether the person has filled in their health profile yet. */
   profileSet: boolean;
+  /** One reviewed tip a day, from the person's topics. */
+  tip: { text: string; organization: string; url: string } | null;
+  /** A small optional moment that fits the time of day. */
+  moment: DayMoment;
 };
 
 function greetingFor(hour: number) {
@@ -310,6 +316,12 @@ export function buildToday(store: DemoStore, user: DemoUser, now = new Date()): 
     focus: focusForToday(store, user, { now, quest: pick, lesson: rankedLesson }),
     reflection: weeklyReflection(store, user, today).lines,
     profileSet: Boolean(user.profile?.updatedAt),
+    tip: (() => {
+      const claim = dailyTip(user, today);
+      const source = claim ? getActiveSource(claim.sourceId) : undefined;
+      return claim && source ? { text: claim.claim, organization: source.organization, url: source.url } : null;
+    })(),
+    moment: momentForHour(hour),
     firstName: firstNameFromEmail(user.email),
     greeting: greetingFor(hour),
     dateLabel: new Intl.DateTimeFormat("en-US", {

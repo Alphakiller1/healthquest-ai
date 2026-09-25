@@ -9,6 +9,7 @@ import { questPeriod } from "@/lib/gamification/quest-period";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { sleepNightsTarget } from "@/lib/profile/profile";
 import { logHabit } from "../engage/actions";
+import { encouragement } from "@/lib/moments/encouragement";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,9 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
 
           {params.saved ? (
             <div role="status">
-              <HQCallout tone="positive">Saved as your own record.</HQCallout>
+              <HQCallout tone="positive" title={encouragement("rest", `${monday}:${habits.length}`)}>
+                Saved as your own record.
+              </HQCallout>
             </div>
           ) : null}
           {params.error ? (

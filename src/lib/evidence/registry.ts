@@ -70,6 +70,17 @@ export const EVIDENCE_SOURCES: readonly EvidenceSource[] = [
     verification: "http_200",
   },
   {
+    id: "odphp-top-10",
+    organization: "HHS ODPHP",
+    title: "Top 10 Things to Know About the Physical Activity Guidelines",
+    url: "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
+    publicationDate: null,
+    lastReviewedAt: "2026-09-25",
+    jurisdiction: "US",
+    status: "active",
+    verification: "http_200",
+  },
+  {
     id: "myplate",
     organization: "USDA",
     title: "MyPlate",

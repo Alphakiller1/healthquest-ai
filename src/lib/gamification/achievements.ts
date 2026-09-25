@@ -37,6 +37,13 @@ export function unlockedAchievements(store: DemoStore, userId: string): Achievem
       detail: "You showed up on seven different days.",
     });
   }
+  if (store.listXp(userId).some((event) => event.eventType === "moment_completed")) {
+    unlocked.push({
+      id: "first-moment",
+      title: "Took a moment",
+      detail: "You used a Now tool when you needed it.",
+    });
+  }
   if (store.listVisitQuestions(userId).length > 0) {
     unlocked.push({
       id: "visit-question",

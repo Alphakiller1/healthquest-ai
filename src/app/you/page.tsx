@@ -22,6 +22,7 @@ const MARKS: { id: string; title: string; hint: string; symbol: HQIconName; tier
   { id: "first-meal", title: "First meal logged", hint: "Log any meal", symbol: "bowl", tier: "sun" },
   { id: "first-movement", title: "First movement", hint: "Log any movement", symbol: "motion", tier: "brand" },
   { id: "first-lesson", title: "First lesson", hint: "Finish a lesson", symbol: "book", tier: "sun" },
+  { id: "first-moment", title: "Took a moment", hint: "Use a Now tool", symbol: "compass", tier: "brand" },
   { id: "visit-question", title: "Visit question", hint: "Save a question for a clinician", symbol: "question", tier: "platinum" },
   { id: "seven-days", title: "Seven active days", hint: "Show up on seven days", symbol: "path", tier: "brand" },
 ];

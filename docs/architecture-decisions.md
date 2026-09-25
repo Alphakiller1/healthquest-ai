@@ -75,3 +75,11 @@ An attempt to hide the tab bar and re-pin composers while typing caused taps to 
 ## 2026-09-25 — Production uses USDA's DEMO_KEY until a registered key is added
 
 Food lookup on the tester deployment uses USDA's published `DEMO_KEY`: real FoodData Central data, capped at 30 requests an hour and 50 a day. The app already stops at the hourly cap and shows a "busy" message instead of guessing, and caches matched foods by FoodData Central id. Replace it with a free registered key (1,000 requests an hour) in Vercel's `USDA_FOODDATA_API_KEY` before inviting more than a handful of testers.
+
+## 2026-09-25 — "Now": in-the-moment help, and a daily layer
+
+A Now tab (replacing the Ask tab; Ask lives inside it) offers four quick tools. **Move** picks low-risk activities for place, minutes, and energy, runs a timer, and logs the activity when done. **Calm** asks how the person feels right now and offers NIMH-backed tools — paced breathing (4 in, 6 out), 5-4-3-2-1 grounding, a short walk, reaching out, one unsaved sentence, questioning a thought. Choosing "like I might hurt myself" shows only crisis support (988 call/text/chat, 911), never self-help tools; nothing tapped in Calm is stored. **Food** gives reviewed tips for the situation (store, cooking, snack, eating out, tight budget), reordered by the profile and filtered for Gentle Food Mode, education-only topics, and foods the person doesn't eat, plus a two-food USDA comparison that states differences ("less sodium than") and never verdicts.
+
+All movement and coping guidance rests on new claims quoted closely from ODPHP's "Top 10 things to know" (a newly registered source, HTTP 200 on 2026-09-25) and NIMH's stress fact sheet; a test fails if any tool cites a claim that isn't active.
+
+Today gains a daily tip (stable for the day, drawn mostly from the profile's topics), a time-of-day moment, and a "Right now" row. Positive reinforcement comes from one reviewed copy library (`lib/moments/encouragement.ts`) — varied, calm, never shaming or about bodies — used after every save and moment. A finished moment earns 5 XP once per kind per day (so at most three a day), counts as showing up for the week, and unlocks a "Took a moment" mark.

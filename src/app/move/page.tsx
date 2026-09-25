@@ -10,6 +10,7 @@ import { questPeriod } from "@/lib/gamification/quest-period";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { movementTarget } from "@/lib/profile/profile";
 import { logActivity } from "../engage/actions";
+import { encouragement } from "@/lib/moments/encouragement";
 
 export const dynamic = "force-dynamic";
 
@@ -62,8 +63,8 @@ export default async function MovePage({ searchParams }: { searchParams: Promise
 
           {params.saved ? (
             <div role="status">
-              <HQCallout tone="positive" title="Saved">
-                Logging movement earns 10 XP. That&rsquo;s for showing up, not a fitness grade.
+              <HQCallout tone="positive" title={encouragement("activity", `${monday}:${activities.length}`)}>
+                +10 XP for logging it. That&rsquo;s for showing up, not a fitness grade.
               </HQCallout>
             </div>
           ) : null}

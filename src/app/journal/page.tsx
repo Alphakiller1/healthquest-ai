@@ -11,6 +11,7 @@ import { usCalendarDate } from "@/lib/health/calendar";
 import { CRISIS_MESSAGE, MEDICAL_EMERGENCY_MESSAGE } from "@/lib/safety/responses";
 import { deleteMeal } from "./actions";
 import { MealForm } from "./meal-form";
+import { encouragement } from "@/lib/moments/encouragement";
 
 export const dynamic = "force-dynamic";
 
@@ -74,9 +75,14 @@ export default async function JournalPage({
           {saved?.explanation ? (
             <section className="hq-surface hq-surface--raised hq-stack" aria-labelledby="saved-title" style={{ gap: 20 }}>
               <div className="hq-cluster" style={{ justifyContent: "space-between" }}>
-                <h2 id="saved-title" className="hq-section-title" style={{ margin: 0 }}>
-                  Saved
-                </h2>
+                <div>
+                  <h2 id="saved-title" className="hq-section-title" style={{ margin: 0 }}>
+                    Saved
+                  </h2>
+                  <p className="hq-secondary" style={{ margin: "2px 0 0" }}>
+                    {encouragement("meal", saved.id)}
+                  </p>
+                </div>
                 <HQChip tone="sun" icon="spark">
                   +5 XP for showing up
                 </HQChip>

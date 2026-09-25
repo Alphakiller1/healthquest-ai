@@ -7,6 +7,8 @@ export const XP_VALUES = {
   weekly_quest_completed: 40,
   budget_planning_completed: 10,
   seven_active_days: 25,
+  /** A finished in-the-moment tool (move, calm, food). One per kind per day. */
+  moment_completed: 5,
 } as const;
 
 export type XpEventType = keyof typeof XP_VALUES;
