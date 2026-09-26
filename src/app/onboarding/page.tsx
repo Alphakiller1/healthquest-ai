@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { readSession } from "@/lib/demo/session";
 import { getDemoStore } from "@/lib/demo/store";
 import { GOAL_OPTIONS } from "@/lib/journey/onboarding";
+import { HEALTH_CONTEXTS } from "@/lib/health/contexts";
+import { FAMILY_HISTORY_CATEGORIES } from "@/lib/health/family-history";
 import { OnboardingFlow } from "@/components/screens/onboarding-flow";
 import { submitOnboarding } from "./actions";
 
@@ -39,6 +41,8 @@ export default async function OnboardingPage({
       <OnboardingFlow
       action={submitOnboarding}
       goals={GOAL_OPTIONS.map(({ id, label }) => ({ id, label }))}
+      contexts={HEALTH_CONTEXTS.map(({ id, label, mode }) => ({ id, label, educationOnly: mode === "education_only" }))}
+      family={FAMILY_HISTORY_CATEGORIES.map(({ id, label }) => ({ id, label }))}
       error={Boolean(params.error)}
       />
     </main>

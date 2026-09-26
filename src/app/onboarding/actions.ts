@@ -5,6 +5,10 @@ import { readSession } from "@/lib/demo/session";
 import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { completeOnboarding } from "@/lib/journey/onboarding";
 import { parseProfileForm } from "@/lib/profile/profile";
+import { normalizeFamilyHistory } from "@/lib/health/family-history";
+import { DETAIL_LEVELS } from "@/lib/experience/depth";
+
+const DETAIL_IDS = new Set<string>(DETAIL_LEVELS.map((option) => option.id));
 
 async function submitOnboardingAction(formData: FormData) {
   const session = await readSession();
@@ -24,10 +28,20 @@ async function submitOnboardingAction(formData: FormData) {
   });
   if (result.status === "under_18") redirect("/onboarding?stopped=age");
   if (result.status === "invalid") redirect("/onboarding?error=form");
-  // Optional routine answers seed the health profile; skipping leaves it empty.
+  // Everything below is optional. Skipped questions stay empty, and an empty
+  // profile is not saved, so Today keeps inviting the person to shape it later.
   const profile = parseProfileForm(formData);
+  const answered = Object.entries(profile).some(([key, value]) => key !== "updatedAt" && value !== undefined && !(Array.isArray(value) && value.length === 0));
+  const detail = String(formData.get("detailLevel") ?? "");
   const saved = store.getUser(user.id);
-  if (saved && (profile.activityBaseline || profile.budget)) store.saveUser({ ...saved, profile });
+  if (saved) {
+    store.saveUser({
+      ...saved,
+      ...(answered ? { profile } : {}),
+      familyHistoryCategories: normalizeFamilyHistory(formData.getAll("familyHistory").map(String)),
+      detailLevel: DETAIL_IDS.has(detail) ? (detail as NonNullable<typeof saved.detailLevel>) : "auto",
+    });
+  }
   redirect("/today");
 }
 

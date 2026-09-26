@@ -87,3 +87,7 @@ Today gains a daily tip (stable for the day, drawn mostly from the profile's top
 ## 2026-09-25 — Layered depth and adaptive detail
 
 Screens now share one contract (eyebrow, question title, one purpose sentence, "What is this?", one primary action) and three depths — glance, guide, deep dive — rendered with `HQLayer` on native `<details>`. A detail level (Simple / Standard / Detailed) decides which layers start open; it grows automatically with use and can be set in Settings, and a closed layer is always one tap away. A header "Aa" control scales all text by 112.5% or 125%. Details in `docs/experience-architecture.md`.
+
+## 2026-09-26 — Curated onboarding
+
+Onboarding becomes the profile-building flow: a welcome with the privacy promises and a choice of Quick start or Make it mine, an immediate adults-only stop at the age step (before any health question), one question per screen with why-we-ask and what-it-changes, skippable optional steps that save nothing when skipped, and a review that shows the effect of every answer, with edit links, before consent. The server action now saves the full profile, family-history categories, and detail level; it never saves an empty profile. See `docs/experience-architecture.md` §6.

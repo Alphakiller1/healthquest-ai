@@ -54,3 +54,14 @@ The level only grows with use, and the thresholds are low so nobody is stuck at 
 3. Put explanation at depth 2 and evidence or data at depth 3 with `HQLayer`, passing the person's level from `experienceFor(user)`.
 4. Anything factual comes from an evidence claim; anything celebratory comes from `lib/moments/encouragement.ts`.
 5. Check it at 375px with Larger text before shipping.
+
+## 6. Onboarding is where the profile is built
+
+Onboarding is the most important flow: it is the person curating the profile that shapes everything after it.
+
+1. **Welcome** — what HealthQuest is and isn't, three promises (you choose what to share; answers shape what you see, never a score; data isn't sold and can be exported or deleted), the Aa hint, and one choice: **Make it mine** (about 4 minutes) or **Quick start** (about 1 minute).
+2. **Age first** — under 18 stops immediately, before any health question, and nothing is saved. The server enforces the same rule.
+3. **One question per screen**, each with "Why we ask" and "What this changes". Make it mine asks focus, movement (with a weekly goal that follows the baseline until the person changes it), sleep, food (budget, eating pattern, Gentle Food Mode), health topics, family history, smoking, and detail level. Quick start asks only focus.
+4. **Everything optional can be skipped.** A skipped step is removed from the form, so it saves nothing; revisiting it brings it back empty. An empty profile is not saved, so Today keeps inviting the person to shape it later.
+5. **Sensitive answers respond immediately.** Choosing an eating-disorder history explains, on the spot, that Gentle Food Mode will stay on.
+6. **Review before consent** — "Here's how HealthQuest will work for you" shows the effect of each answer (quest sizes, food settings, topics, detail) with an Edit link that returns straight to the review. Consent comes last, after the person has seen what they're agreeing to store.
