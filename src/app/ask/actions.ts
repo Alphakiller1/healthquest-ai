@@ -43,7 +43,16 @@ async function askQuestionAction(formData: FormData): Promise<AskResult> {
   const provider = modelAllowed ? configured.provider : createEvidenceAssistant();
 
   const input = prepareAssistantInput(user, question);
-  const result = await runAssistantPipeline(input, provider, activeSourceIds());
+  let result = await runAssistantPipeline(input, provider, activeSourceIds());
+  let madeBy: "ai" | "sources" = modelAllowed ? "ai" : "sources";
+  const modelCalled = modelAllowed && result.providerCalled;
+
+  // The model can be down, out of credit, or produce nothing that passes the checks.
+  // The reviewed-sources answer needs none of that, so try it before giving up.
+  if (result.type === "fallback" && modelAllowed) {
+    result = await runAssistantPipeline(input, createEvidenceAssistant(), activeSourceIds());
+    madeBy = "sources";
+  }
 
   if (result.type === "emergency") {
     countSafetyCategory(result.decision.category ?? "unknown");
@@ -57,7 +66,7 @@ async function askQuestionAction(formData: FormData): Promise<AskResult> {
     return { id, kind: "emergency", question, message: result.message, actions: result.actions };
   }
 
-  if (modelAllowed && result.providerCalled) store.recordAssistantUse(user.id, day);
+  if (modelCalled) store.recordAssistantUse(user.id, day);
 
   if (result.type === "fallback") {
     return {
@@ -74,7 +83,7 @@ async function askQuestionAction(formData: FormData): Promise<AskResult> {
     store.addConversation({ id: randomUUID(), userId: user.id, role: "assistant", body: result.response.summary, createdAt });
   }
 
-  return { id, kind: "answer", question, response: result.response, madeBy: modelAllowed ? "ai" : "sources" };
+  return { id, kind: "answer", question, response: result.response, madeBy };
 }
 
 export const askQuestion = withPersist(askQuestionAction);
