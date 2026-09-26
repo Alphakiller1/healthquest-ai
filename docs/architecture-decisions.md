@@ -106,3 +106,7 @@ Onboarding becomes the profile-building flow: a welcome with the privacy promise
 ## 2026-09-26 — Mobile accessibility pass
 
 Every screen was checked on a production build at 320, 360, 390, and 844×390 (landscape) CSS pixels, and at the 125% text size, with reduced motion: no horizontal overflow, one `main` and one `h1` per screen, no inputs under 16px (which trigger iOS zoom), no serious axe violations, and no CSP violations. Small buttons, subnav tabs, and Ask prompts went from 40px to the 44px target, and the small-print source links gained a padded 44px tap area that doesn't change line spacing.
+
+## 2026-09-26 — Registered USDA key in production
+
+`USDA_FOODDATA_API_KEY` in Vercel production now holds a registered api.data.gov key (3,600 requests an hour), replacing `DEMO_KEY`. Verified live: a food search on /now/food returns FoodData Central results.
