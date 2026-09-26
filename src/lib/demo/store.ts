@@ -6,7 +6,8 @@ import { revalidatePath } from "next/cache";
 import { cache } from "react";
 import { dataDir } from "@/lib/demo/data-dir";
 import type { HealthProfile } from "@/lib/profile/profile";
-import { redisConfig, redisGet, redisSet } from "@/lib/demo/redis";
+import { redisConfig, redisDel, redisGet, redisHDel, redisHGet, redisHSet, redisSet } from "@/lib/demo/redis";
+import { readSession } from "@/lib/demo/session";
 import {
   appendXpEvent,
   type GamificationEvent,
@@ -150,8 +151,10 @@ export type DemoStore = {
   clearConversations(userId: string): void;
   addActivity(activity: ActivityRecord): void;
   listActivities(userId: string): ActivityRecord[];
+  deleteActivity(userId: string, activityId: string): void;
   addHabit(habit: HabitRecord): void;
   listHabits(userId: string): HabitRecord[];
+  deleteHabit(userId: string, habitId: string): void;
   completeLesson(completion: LessonCompletion): void;
   listLessonCompletions(userId: string): LessonCompletion[];
   deleteUser(userId: string): void;
@@ -287,6 +290,11 @@ function createStore(load: () => Database, save: (db: Database) => void): DemoSt
     listActivities(userId) {
       return load().activities.filter((item) => item.userId === userId);
     },
+    deleteActivity(userId, activityId) {
+      const db = load();
+      db.activities = db.activities.filter((item) => !(item.userId === userId && item.id === activityId));
+      save(db);
+    },
     addHabit(habit) {
       const db = load();
       db.habits.push(habit);
@@ -294,6 +302,11 @@ function createStore(load: () => Database, save: (db: Database) => void): DemoSt
     },
     listHabits(userId) {
       return load().habits.filter((item) => item.userId === userId);
+    },
+    deleteHabit(userId, habitId) {
+      const db = load();
+      db.habits = db.habits.filter((item) => !(item.userId === userId && item.id === habitId));
+      save(db);
     },
     completeLesson(completion) {
       const db = load();
@@ -359,18 +372,95 @@ function createStore(load: () => Database, save: (db: Database) => void): DemoSt
 
 let fileStore: DemoStore | null = null;
 
-const REDIS_KEY = "hq:demo-store";
+/*
+ * Redis layout (tester deployment): one record per person, plus an email → id
+ * hash. A request loads only the signed-in person's record, so the size of a
+ * request never grows with the number of testers, and one person's save never
+ * rewrites anyone else's data. Sign-in loads a record by email first.
+ */
+const LEGACY_KEY = "hq:demo-store";
+const MIGRATED_KEY = "hq:v2:migrated";
+const EMAILS_KEY = "hq:v2:emails";
+const userKey = (id: string) => `hq:v2:user:${id}`;
 
-type Snapshot = { store: DemoStore; db: Database; dirty: boolean };
+type Snapshot = {
+  store: DemoStore;
+  db: Database;
+  dirty: boolean;
+  /** id → email of every person loaded into this snapshot, to detect deletions and email changes. */
+  loaded: Map<string, string>;
+};
 
 /** Set by withPersist for the duration of one server action. */
 const actionScope = new AsyncLocalStorage<{ snapshot: Promise<Snapshot> | null }>();
 
+/** One person's slice of the database. */
+function partitionFor(db: Database, userId: string): Database {
+  return {
+    users: db.users.filter((user) => user.id === userId),
+    meals: db.meals.filter((item) => item.userId === userId),
+    xp: db.xp.filter((item) => item.userId === userId),
+    activities: db.activities.filter((item) => item.userId === userId),
+    habits: db.habits.filter((item) => item.userId === userId),
+    lessonCompletions: db.lessonCompletions.filter((item) => item.userId === userId),
+    assistantUses: db.assistantUses.filter((item) => item.userId === userId),
+    visitQuestions: db.visitQuestions.filter((item) => item.userId === userId),
+    safetyEvents: db.safetyEvents.filter((item) => item.userId === userId),
+    conversations: db.conversations.filter((item) => item.userId === userId),
+  };
+}
+
+function mergeInto(db: Database, part: Database) {
+  for (const key of Object.keys(db) as (keyof Database)[]) {
+    (db[key] as unknown[]).push(...(part[key] as unknown[]));
+  }
+}
+
+let migration: Promise<void> | null = null;
+
+/** One-time split of the old single-record store into per-person records. The old key is kept as a backup. */
+function ensureMigrated(config: NonNullable<ReturnType<typeof redisConfig>>): Promise<void> {
+  migration ??= (async () => {
+    if (await redisGet(config, MIGRATED_KEY)) return;
+    const legacy = await redisGet(config, LEGACY_KEY);
+    if (legacy) {
+      const db = normalize(JSON.parse(legacy) as Partial<Database>);
+      for (const user of db.users) {
+        await redisSet(config, userKey(user.id), JSON.stringify(partitionFor(db, user.id)));
+        await redisHSet(config, EMAILS_KEY, user.email, user.id);
+      }
+    }
+    await redisSet(config, MIGRATED_KEY, new Date().toISOString());
+  })().catch((error) => {
+    migration = null;
+    throw error;
+  });
+  return migration;
+}
+
+async function loadUserInto(snapshot: Snapshot, userId: string) {
+  const config = redisConfig();
+  if (!config || snapshot.loaded.has(userId)) return;
+  const raw = await redisGet(config, userKey(userId));
+  if (!raw) return;
+  const part = normalize(JSON.parse(raw) as Partial<Database>);
+  mergeInto(snapshot.db, part);
+  snapshot.loaded.set(userId, part.users[0]?.email ?? "");
+}
+
+async function sessionUserId(): Promise<string | null> {
+  try {
+    return (await readSession())?.userId ?? null;
+  } catch {
+    return null; // Outside a request (unit tests).
+  }
+}
+
 async function loadSnapshot(writable: boolean): Promise<Snapshot> {
   const config = redisConfig();
   if (!config) throw new Error("Redis is not configured.");
-  const raw = await redisGet(config, REDIS_KEY);
-  const snapshot = { db: normalize(raw ? (JSON.parse(raw) as Partial<Database>) : null), dirty: false } as Snapshot;
+  await ensureMigrated(config);
+  const snapshot = { db: emptyDb(), dirty: false, loaded: new Map<string, string>() } as Snapshot;
   snapshot.store = createStore(
     () => snapshot.db,
     (next) => {
@@ -381,35 +471,71 @@ async function loadSnapshot(writable: boolean): Promise<Snapshot> {
       snapshot.dirty = true;
     },
   );
+  const userId = await sessionUserId();
+  if (userId) await loadUserInto(snapshot, userId);
   return snapshot;
 }
 
 /** One read-only snapshot per server render. */
 const renderSnapshot = cache(() => loadSnapshot(false));
 
+async function currentSnapshot(): Promise<Snapshot> {
+  const scope = actionScope.getStore();
+  if (scope) {
+    scope.snapshot ??= loadSnapshot(true);
+    return scope.snapshot;
+  }
+  return renderSnapshot();
+}
+
+/** Sign-in: load the person with this email (if any) so getUserByEmail can find them. */
+export async function preloadUserByEmail(email: string): Promise<void> {
+  const config = redisConfig();
+  if (!config) return;
+  const snapshot = await currentSnapshot();
+  const id = await redisHGet(config, EMAILS_KEY, email);
+  if (id) await loadUserInto(snapshot, id);
+}
+
+async function persist(snapshot: Snapshot) {
+  const config = redisConfig();
+  if (!config || !snapshot.dirty) return;
+  const present = new Set(snapshot.db.users.map((user) => user.id));
+  for (const user of snapshot.db.users) {
+    await redisSet(config, userKey(user.id), JSON.stringify(partitionFor(snapshot.db, user.id)));
+    const previous = snapshot.loaded.get(user.id);
+    if (previous !== user.email) {
+      if (previous) await redisHDel(config, EMAILS_KEY, previous);
+      await redisHSet(config, EMAILS_KEY, user.email, user.id);
+    }
+  }
+  // Anyone loaded but no longer present was deleted: remove their record and email entry.
+  for (const [id, email] of snapshot.loaded) {
+    if (present.has(id)) continue;
+    await redisDel(config, userKey(id));
+    if (email) await redisHDel(config, EMAILS_KEY, email);
+  }
+}
+
 /**
  * The demo store. Locally it is a JSON file. When Redis is configured (the
- * deployed tester build) each request works on a snapshot of the whole
- * document; server actions wrapped in withPersist write it back before they
- * redirect, so the next request, on any instance, sees the change.
+ * deployed tester build) each request works on a snapshot of the signed-in
+ * person's record; server actions wrapped in withPersist write it back before
+ * they redirect, so the next request, on any instance, sees the change.
  */
 export async function getDemoStore(): Promise<DemoStore> {
   if (!redisConfig()) {
     fileStore ??= createFileStore();
     return fileStore;
   }
-  const scope = actionScope.getStore();
-  if (scope) {
-    scope.snapshot ??= loadSnapshot(true);
-    return (await scope.snapshot).store;
-  }
-  return (await renderSnapshot()).store;
+  return (await currentSnapshot()).store;
 }
 
 /**
  * Wrap every exported server action that can write. The finally block runs
  * before a redirect leaves the action, because redirect() throws.
- * Last write wins: fine for a handful of testers, not for production.
+ * Concurrent saves by the same person are last-write-wins; different people
+ * never overwrite each other.
  */
 export function withPersist<Args extends unknown[], Result>(
   action: (...args: Args) => Promise<Result>,
@@ -419,11 +545,7 @@ export function withPersist<Args extends unknown[], Result>(
     try {
       return await actionScope.run(scope, () => action(...args));
     } finally {
-      const config = redisConfig();
-      if (config && scope.snapshot) {
-        const snapshot = await scope.snapshot;
-        if (snapshot.dirty) await redisSet(config, REDIS_KEY, JSON.stringify(snapshot.db));
-      }
+      if (redisConfig() && scope.snapshot) await persist(await scope.snapshot);
       // The app shell (nav, XP) lives in the root layout, which Next keeps across
       // navigations. Refresh it so a finished onboarding shows the tabs and new XP shows at once.
       try {

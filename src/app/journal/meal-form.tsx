@@ -62,6 +62,7 @@ export function MealForm({
           id="foodName"
           name="foodName"
           required
+          maxLength={120}
           autoComplete="off"
           className="hq-input"
           aria-describedby="foodName-hint"
@@ -70,13 +71,13 @@ export function MealForm({
 
       <div className="hq-log-form__row">
         <HQField label="Amount" htmlFor="quantity">
-          <input id="quantity" name="quantity" inputMode="decimal" className="hq-input" placeholder="1" />
+          <input id="quantity" name="quantity" maxLength={20} inputMode="decimal" className="hq-input" placeholder="1" />
         </HQField>
         <HQField label="Unit" htmlFor="servingUnit">
-          <input id="servingUnit" name="servingUnit" className="hq-input" placeholder="cup" />
+          <input id="servingUnit" name="servingUnit" maxLength={30} className="hq-input" placeholder="cup" />
         </HQField>
         <HQField label="Approximate cost, optional" htmlFor="approximateCost">
-          <input id="approximateCost" name="approximateCost" inputMode="decimal" className="hq-input" placeholder="$" />
+          <input id="approximateCost" name="approximateCost" maxLength={12} inputMode="decimal" className="hq-input" placeholder="$" />
         </HQField>
       </div>
 
@@ -87,10 +88,10 @@ export function MealForm({
         </summary>
         <div>
           <HQField label="Preparation" htmlFor="preparation">
-            <input id="preparation" name="preparation" className="hq-input" placeholder="baked, raw, with milk…" />
+            <input id="preparation" name="preparation" maxLength={120} className="hq-input" placeholder="baked, raw, with milk…" />
           </HQField>
           <HQField label="Notes, optional" htmlFor="notes">
-            <textarea id="notes" name="notes" rows={3} className="hq-textarea" />
+            <textarea id="notes" name="notes" rows={3} maxLength={500} className="hq-textarea" />
           </HQField>
         </div>
       </details>

@@ -49,6 +49,14 @@ test("adult can onboard, log, learn, export, see an emergency screen, and delete
   await page.getByRole("button", { name: "Save movement" }).click();
   await expect(page.getByText("10 XP")).toBeVisible();
 
+  // Free text anywhere goes through the emergency check, including the activity name.
+  await page.goto("/move");
+  await page.getByLabel("Activity").fill("I cant breathe and my chest hurts");
+  await page.getByLabel("Minutes").fill("5");
+  await page.getByRole("radio", { name: "easy" }).check();
+  await page.getByRole("button", { name: "Save movement" }).click();
+  await expect(page.getByRole("link", { name: "Call 911" })).toBeVisible();
+
   await page.goto("/learn/food-labels");
   await page.getByRole("radio", { name: "The serving size listed" }).check();
   await page.getByRole("button", { name: "Save lesson" }).click();

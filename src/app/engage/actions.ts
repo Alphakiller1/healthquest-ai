@@ -6,6 +6,9 @@ import { requireOnboardedUser } from "@/lib/demo/current-user";
 import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { awardSevenDayMilestone } from "@/lib/gamification/milestone";
 import { awardCompletedQuests } from "@/lib/gamification/quests";
+import { evaluateSafety } from "@/lib/safety/evaluate";
+import { countSafetyCategory } from "@/lib/privacy/ops";
+import { clip, FIELD_LIMITS, MAX_ACTIVITY_MINUTES } from "@/lib/validation/limits";
 
 function today(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
@@ -25,10 +28,23 @@ async function checkInAction() {
 
 async function logActivityAction(formData: FormData) {
   const user = await requireOnboardedUser();
-  const activityType = String(formData.get("activityType") ?? "").trim();
+  const activityType = clip(formData.get("activityType"), FIELD_LIMITS.activityType);
   const duration = Number(formData.get("durationMinutes"));
+  // The activity name is free text, so it gets the same emergency check as meals and questions.
+  const decision = evaluateSafety(activityType);
+  if (decision.emergency && decision.responseKind) {
+    countSafetyCategory(decision.category ?? "unknown");
+    (await getDemoStore()).recordSafetyEvent({
+      userId: user.id,
+      category: decision.category ?? "unknown",
+      ruleVersion: decision.ruleVersion,
+      action: decision.responseKind,
+      createdAt: new Date().toISOString(),
+    });
+    redirect(`/move?emergency=${decision.responseKind}`);
+  }
   const intensity = String(formData.get("intensity") ?? "");
-  if (activityType.length < 2 || !Number.isFinite(duration) || duration <= 0) {
+  if (activityType.length < 2 || !Number.isFinite(duration) || duration <= 0 || duration > MAX_ACTIVITY_MINUTES) {
     redirect("/move?error=1");
   }
   if (intensity !== "easy" && intensity !== "moderate" && intensity !== "hard") {
@@ -97,7 +113,22 @@ async function skipQuestAction(formData: FormData) {
   redirect("/quests");
 }
 
+/** Removing an entry deletes it; points already earned stay, as with meals. Only the owner's own entries match. */
+async function deleteActivityAction(formData: FormData) {
+  const user = await requireOnboardedUser();
+  (await getDemoStore()).deleteActivity(user.id, String(formData.get("activityId") ?? ""));
+  redirect("/move");
+}
+
+async function deleteHabitAction(formData: FormData) {
+  const user = await requireOnboardedUser();
+  (await getDemoStore()).deleteHabit(user.id, String(formData.get("habitId") ?? ""));
+  redirect("/habits");
+}
+
 export const checkIn = withPersist(checkInAction);
+export const deleteActivity = withPersist(deleteActivityAction);
+export const deleteHabit = withPersist(deleteHabitAction);
 export const logActivity = withPersist(logActivityAction);
 export const logHabit = withPersist(logHabitAction);
 export const skipQuest = withPersist(skipQuestAction);

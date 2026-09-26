@@ -41,11 +41,14 @@ export function decodeSession(value: string | undefined): DemoSession | null {
 }
 
 export async function readSession(): Promise<DemoSession | null> {
+  // Read cookies first, whatever the environment: it marks every page that shows the
+  // app shell as per-request. Checking the env first let the build prerender pages
+  // (the 404) that then read cookies at runtime and crashed with DYNAMIC_SERVER_USAGE.
+  const store = await cookies();
   if (process.env.NODE_ENV === "production" && !testerModeEnabled()) {
     return null;
   }
   if (process.env.NEXT_PUBLIC_SUPABASE_URL) return null;
-  const store = await cookies();
   return decodeSession(store.get(COOKIE)?.value);
 }
 

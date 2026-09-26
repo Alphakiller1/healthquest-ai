@@ -14,7 +14,8 @@ const sans = Hanken_Grotesk({
 const serif = Newsreader({
   variable: "--font-hq-serif",
   subsets: ["latin"],
-  style: ["normal", "italic"],
+  // Normal only: nothing uses italics, and each extra file costs people on slow connections.
+  style: ["normal"],
 });
 
 export const metadata: Metadata = {

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HQGlyph } from "@/components/hq/icon";
-import { HQCallout, HQEmptyState, HQPath, stepsToNodes } from "@/components/hq/primitives";
+import { HQButton, HQCallout, HQEmptyState, HQPath, HQSafetyBanner, stepsToNodes } from "@/components/hq/primitives";
+import { CRISIS_MESSAGE, MEDICAL_EMERGENCY_MESSAGE } from "@/lib/safety/responses";
 import { JournalTabs, groupByDay } from "@/components/screens/journal-tabs";
 import { MoveForm } from "@/components/screens/log-forms";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
@@ -9,14 +10,14 @@ import { getDemoStore } from "@/lib/demo/store";
 import { questPeriod } from "@/lib/gamification/quest-period";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { movementTarget } from "@/lib/profile/profile";
-import { logActivity } from "../engage/actions";
+import { deleteActivity, logActivity } from "../engage/actions";
 import { encouragement } from "@/lib/moments/encouragement";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Movement · HealthQuest" };
 
-export default async function MovePage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
+export default async function MovePage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; emergency?: string }> }) {
   const user = await requireOnboardedUser();
   const params = await searchParams;
   const activities = (await getDemoStore()).listActivities(user.id);
@@ -36,6 +37,24 @@ export default async function MovePage({ searchParams }: { searchParams: Promise
         </header>
 
         <JournalTabs current="/move" />
+
+        {params.emergency === "medical" ? (
+          <div data-span="full">
+            <HQSafetyBanner message={MEDICAL_EMERGENCY_MESSAGE} actions={[{ label: "Call 911", href: "tel:911", primary: true }]} />
+          </div>
+        ) : null}
+        {params.emergency === "crisis" ? (
+          <div data-span="full">
+            <HQSafetyBanner
+              message={CRISIS_MESSAGE}
+              actions={[
+                { label: "Call 988", href: "tel:988", primary: true },
+                { label: "Text 988", href: "sms:988", primary: true },
+                { label: "Call 911", href: "tel:911" },
+              ]}
+            />
+          </div>
+        ) : null}
 
         <div className="hq-stack" style={{ gap: 24 }}>
           <section className="hq-surface hq-stack" style={{ gap: 10 }} aria-labelledby="goal-title">
@@ -90,7 +109,7 @@ export default async function MovePage({ searchParams }: { searchParams: Promise
                   <p className="hq-log-day">{group.label}</p>
                   <ul className="hq-log-list">
                     {group.items.map((item) => (
-                      <li key={item.id} className="hq-log-item" style={{ gridTemplateColumns: "auto 1fr" }}>
+                      <li key={item.id} className="hq-log-item">
                         <HQGlyph name="motion" tone="brand" />
                         <span>
                           <span className="hq-log-item__title" style={{ textTransform: "capitalize" }}>
@@ -100,6 +119,12 @@ export default async function MovePage({ searchParams }: { searchParams: Promise
                             {item.durationMinutes} min · felt {item.intensity}
                           </span>
                         </span>
+                        <form action={deleteActivity}>
+                          <input type="hidden" name="activityId" value={item.id} />
+                          <HQButton type="submit" variant="quiet" size="sm" aria-label={`Remove ${item.activityType}`}>
+                            Remove
+                          </HQButton>
+                        </form>
                       </li>
                     ))}
                   </ul>

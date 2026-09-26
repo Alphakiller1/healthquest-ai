@@ -87,7 +87,7 @@
 }
 
 .hq-btn--sm {
-  min-height: 40px;
+  min-height: var(--hq-target);
   padding: 0 var(--hq-space-4);
   font-size: var(--hq-text-label);
 }
@@ -1678,4 +1678,16 @@
 :root[data-text="larger"] .hq-text-size {
   color: var(--hq-brand-ink);
   background: var(--hq-brand-soft);
+}
+
+/*
+ * Source links sit in small print, but a thumb still has to hit them. The
+ * padding grows the tap area to the 44px target; the matching negative margin
+ * keeps the line spacing exactly as it was.
+ */
+.hq-micro a,
+a.hq-micro {
+  display: inline-block;
+  padding-block: 14px;
+  margin-block: -14px;
 }

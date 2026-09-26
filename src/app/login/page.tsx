@@ -6,6 +6,7 @@ import { HQButton, HQCallout, HQField } from "@/components/hq/primitives";
 const ERRORS: Record<string, string> = {
   email: "Enter a valid email address.",
   code: "That access code didn't match. Check it and try again.",
+  wait: "Too many tries. Please wait 15 minutes and try again.",
   config: "Sign-in is not configured for this deployment yet.",
   send: "The sign-in email could not be sent.",
 };

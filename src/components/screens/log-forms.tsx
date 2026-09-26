@@ -32,7 +32,7 @@ export function MoveForm({ action, recent }: { action: FormAction; recent: strin
         </div>
       ) : null}
       <HQField label="Activity" htmlFor="activityType" hint="A walk, chores, dancing, stretching — it all counts.">
-        <input ref={activity} id="activityType" name="activityType" required autoComplete="off" className="hq-input" placeholder="walk" />
+        <input ref={activity} id="activityType" name="activityType" required maxLength={80} autoComplete="off" className="hq-input" placeholder="walk" />
       </HQField>
       <HQField label="Minutes" htmlFor="durationMinutes">
         <input ref={minutes} id="durationMinutes" name="durationMinutes" type="number" inputMode="numeric" min={1} max={600} required className="hq-input" />

@@ -29,7 +29,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--hq-space-3);
-  min-height: 40px;
+  min-height: var(--hq-target);
 }
 
 .hq-today__journey-head h2 { margin: 0; }
@@ -208,7 +208,7 @@
 }
 
 .hq-prompt {
-  min-height: 40px;
+  min-height: var(--hq-target);
   padding: var(--hq-space-2) var(--hq-space-3);
   border: 1px solid var(--hq-line);
   border-radius: var(--hq-radius-md);
@@ -453,7 +453,7 @@ button.hq-prompt:hover { border-color: var(--hq-line-strong); background: var(--
   align-items: center;
   justify-content: center;
   gap: var(--hq-space-2);
-  min-height: 40px;
+  min-height: var(--hq-target);
   border-radius: calc(var(--hq-radius-md) - 3px);
   color: var(--hq-text-secondary);
   font-size: var(--hq-text-label);
@@ -1104,4 +1104,58 @@ button.hq-prompt:hover { border-color: var(--hq-line-strong); background: var(--
 .hq-onboard__review-value {
   font-weight: var(--hq-weight-semibold);
   line-height: 1.35;
+}
+
+/* ───────── Landing ───────── */
+
+.hq-landing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hq-space-12);
+  max-width: 46rem;
+}
+
+.hq-landing__hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hq-space-4);
+  padding-top: var(--hq-space-6);
+}
+
+.hq-landing__hero .hq-display { font-size: clamp(2.25rem, 1.6rem + 3vw, 3.5rem); margin: 0; }
+.hq-landing__hero .hq-secondary { margin: 0; font-size: var(--hq-text-section); max-width: 36rem; }
+
+.hq-landing__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hq-space-3);
+}
+
+@media (min-width: 560px) {
+  .hq-landing__actions { flex-direction: row; }
+}
+
+.hq-landing__how {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hq-space-5);
+}
+
+.hq-landing__how .hq-title { margin: 0; }
+.hq-landing__how .hq-path__body { gap: 4px; }
+
+.hq-landing__promises {
+  display: grid;
+  gap: var(--hq-space-5);
+}
+
+@media (min-width: 760px) {
+  .hq-landing__promises { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--hq-space-6) var(--hq-space-8); }
+}
+
+.hq-landing__promise {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--hq-space-4);
+  align-items: start;
 }

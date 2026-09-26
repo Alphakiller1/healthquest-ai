@@ -3,12 +3,14 @@
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { withinLimit } from "@/lib/security/rate-limit";
 import { demoModeEnabled, testerCodeMatches, testerModeEnabled, writeSession } from "@/lib/demo/session";
-import { getDemoStore, withPersist } from "@/lib/demo/store";
+import { getDemoStore, preloadUserByEmail, withPersist } from "@/lib/demo/store";
 import { getPublicSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
-const emailSchema = z.string().trim().email();
+// Lower-cased so "Ada@…" and "ada@…" are one account.
+const emailSchema = z.string().trim().toLowerCase().email();
 
 async function signInAction(formData: FormData) {
   const email = emailSchema.safeParse(formData.get("email"));
@@ -26,8 +28,10 @@ async function signInAction(formData: FormData) {
   }
 
   if (testerModeEnabled()) {
+    // Every attempt counts, per network (hashed), across server instances. Over the limit
+    // the code isn't even checked, so guessing can't continue in the background.
+    if (!(await withinLimit("tester-code", 10, 15 * 60))) redirect("/login?error=wait");
     if (!testerCodeMatches(String(formData.get("accessCode") ?? ""))) {
-      // A short pause makes guessing slower; the code itself is long and random.
       await new Promise((done) => setTimeout(done, 750));
       redirect("/login?error=code");
     }
@@ -35,6 +39,7 @@ async function signInAction(formData: FormData) {
     redirect("/login?error=config");
   }
 
+  await preloadUserByEmail(email.data);
   const store = await getDemoStore();
   const existing = store.getUserByEmail(email.data);
   const user = existing ?? {

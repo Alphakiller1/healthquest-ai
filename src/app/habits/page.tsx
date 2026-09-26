@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { HQGlyph } from "@/components/hq/icon";
-import { HQCallout, HQEmptyState, HQPath, stepsToNodes } from "@/components/hq/primitives";
+import { HQButton, HQCallout, HQEmptyState, HQPath, stepsToNodes } from "@/components/hq/primitives";
 import { JournalTabs, groupByDay } from "@/components/screens/journal-tabs";
 import { RestForm } from "@/components/screens/log-forms";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
@@ -8,7 +8,7 @@ import { getDemoStore } from "@/lib/demo/store";
 import { questPeriod } from "@/lib/gamification/quest-period";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { sleepNightsTarget } from "@/lib/profile/profile";
-import { logHabit } from "../engage/actions";
+import { deleteHabit, logHabit } from "../engage/actions";
 import { encouragement } from "@/lib/moments/encouragement";
 
 export const dynamic = "force-dynamic";
@@ -80,7 +80,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
                   <p className="hq-log-day">{group.label}</p>
                   <ul className="hq-log-list">
                     {group.items.map((habit) => (
-                      <li key={habit.id} className="hq-log-item" style={{ gridTemplateColumns: "auto 1fr" }}>
+                      <li key={habit.id} className="hq-log-item">
                         <HQGlyph name="moon" tone="night" />
                         <span className="hq-secondary" style={{ margin: 0 }}>
                           {[
@@ -92,6 +92,12 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
                             .filter(Boolean)
                             .join(" · ") || "Note saved"}
                         </span>
+                        <form action={deleteHabit}>
+                          <input type="hidden" name="habitId" value={habit.id} />
+                          <HQButton type="submit" variant="quiet" size="sm" aria-label="Remove this note">
+                            Remove
+                          </HQButton>
+                        </form>
                       </li>
                     ))}
                   </ul>

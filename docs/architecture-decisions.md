@@ -91,3 +91,18 @@ Screens now share one contract (eyebrow, question title, one purpose sentence, "
 ## 2026-09-26 — Curated onboarding
 
 Onboarding becomes the profile-building flow: a welcome with the privacy promises and a choice of Quick start or Make it mine, an immediate adults-only stop at the age step (before any health question), one question per screen with why-we-ask and what-it-changes, skippable optional steps that save nothing when skipped, and a review that shows the effect of every answer, with edit links, before consent. The server action now saves the full profile, family-history categories, and detail level; it never saves an empty profile. See `docs/experience-architecture.md` §6.
+
+## 2026-09-26 — Functionality audit: storage, abuse limits, error screens
+
+- **Per-person Redis records.** The tester store was one JSON document holding everyone (about 1.2KB per person, so every request grew with the tester count and one person's save rewrote everyone's data). It is now one record per person (`hq:v2:user:<id>`) plus an email → id hash (`hq:v2:emails`). A request loads only the signed-in person's record, and sign-in loads by email first. The old `hq:demo-store` key is split once on first use (`hq:v2:migrated` marks it done) and kept as a backup.
+- **Content-Security-Policy** in production: same-origin only for scripts, styles, images, fonts, and connections; no framing, plugins, or cross-origin form posts. Inline scripts are still allowed (Next's runtime and the theme boot script, no nonces yet).
+- **Tester sign-in rate limit:** 10 attempts per 15 minutes per network (hashed IP, counted in Redis across instances). Every attempt counts before the code is checked.
+- **Field limits** (`lib/validation/limits.ts`) on every free-text field, enforced on the server and mirrored with `maxLength`; movement is capped at 600 minutes.
+- **Movement safety:** activity text goes through the same safety engine as meals and Ask, so "chest pain on my walk" shows the emergency screen.
+- **Delete** for single movement and habit entries.
+- **Recovery screens:** not-found, error (with 988/911 always visible), loading, and a global error fallback.
+- `readSession` reads cookies before checking the environment, so every page with the app shell renders per request. Checking the env first let a build without tester variables prerender the 404, which then crashed at runtime.
+
+## 2026-09-26 — Mobile accessibility pass
+
+Every screen was checked on a production build at 320, 360, 390, and 844×390 (landscape) CSS pixels, and at the 125% text size, with reduced motion: no horizontal overflow, one `main` and one `h1` per screen, no inputs under 16px (which trigger iOS zoom), no serious axe violations, and no CSP violations. Small buttons, subnav tabs, and Ask prompts went from 40px to the 44px target, and the small-print source links gained a padded 44px tap area that doesn't change line spacing.

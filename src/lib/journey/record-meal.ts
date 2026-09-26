@@ -12,6 +12,7 @@ import { evaluateSafety } from "@/lib/safety/evaluate";
 import { emergencyTemplate } from "@/lib/safety/responses";
 import type { DemoStore, DemoUser, MealRecord } from "@/lib/demo/store";
 import type { NutritionProvider } from "@/lib/nutrition/types";
+import { clip, FIELD_LIMITS } from "@/lib/validation/limits";
 
 export type MealDraft = {
   foodName: string;
@@ -54,11 +55,13 @@ export async function recordMeal(input: {
   assistant: HealthAssistantProvider | null;
   assistantDemo: boolean;
 }): Promise<RecordMealResult> {
-  const foodName = input.draft.foodName.trim();
+  const foodName = clip(input.draft.foodName, FIELD_LIMITS.foodName);
   if (foodName.length < 2) {
     return { status: "invalid", message: "Add the food name before saving." };
   }
-  const safetyText = [foodName, input.draft.notes, input.draft.preparation].join(". ");
+  const notes = clip(input.draft.notes, FIELD_LIMITS.notes);
+  const preparation = clip(input.draft.preparation, FIELD_LIMITS.preparation);
+  const safetyText = [foodName, notes, preparation].join(". ");
   const decision = evaluateSafety(safetyText);
   if (decision.emergency && decision.responseKind) {
     const template = emergencyTemplate(decision.responseKind);
@@ -80,11 +83,11 @@ export async function recordMeal(input: {
     id: randomUUID(),
     userId: input.user.id,
     foodName,
-    quantity: input.draft.quantity.trim(),
-    servingUnit: input.draft.servingUnit.trim(),
-    preparation: input.draft.preparation.trim(),
-    approximateCost: input.draft.approximateCost.trim(),
-    notes: input.draft.notes.trim(),
+    quantity: clip(input.draft.quantity, FIELD_LIMITS.quantity),
+    servingUnit: clip(input.draft.servingUnit, FIELD_LIMITS.servingUnit),
+    preparation,
+    approximateCost: clip(input.draft.approximateCost, FIELD_LIMITS.approximateCost),
+    notes,
     fdcId: matched?.fdcId ?? null,
     nutritionDemo: matched?.demo ?? false,
     createdAt: new Date().toISOString(),
@@ -122,7 +125,7 @@ export async function recordMeal(input: {
   } else if (input.assistant) {
     const pipeline = await runAssistantPipeline(
       prepareAssistantInput(input.user, `How does this meal relate to what I'm trying to learn? ${foodName}`, {
-        description: [foodName, input.draft.preparation].filter(Boolean).join(", "),
+        description: [foodName, preparation].filter(Boolean).join(", "),
         nutrientStatus: matched ? "matched" : "uncertain",
         demoNutrition: matched?.demo ?? false,
         nutrients: matched

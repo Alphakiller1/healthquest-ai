@@ -34,3 +34,40 @@ export async function redisGet(config: RedisConfig, key: string): Promise<string
 export async function redisSet(config: RedisConfig, key: string, value: string): Promise<void> {
   await call(config, `/set/${encodeURIComponent(key)}`, value);
 }
+
+/**
+ * Fixed-window counter: INCR the key, and on the first hit give it an expiry.
+ * Returns the count within the current window.
+ */
+export async function redisCountInWindow(config: RedisConfig, key: string, windowSeconds: number): Promise<number> {
+  const response = await fetch(`${config.url}/pipeline`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${config.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify([
+      ["INCR", key],
+      ["EXPIRE", key, String(windowSeconds), "NX"],
+    ]),
+    cache: "no-store",
+  });
+  const results = (await response.json()) as Array<{ result?: unknown; error?: string }>;
+  if (!response.ok || !Array.isArray(results) || results[0]?.error) throw new Error("Redis rate count failed");
+  return Number(results[0]?.result ?? 0);
+}
+
+export async function redisDel(config: RedisConfig, key: string): Promise<void> {
+  await call(config, `/del/${encodeURIComponent(key)}`);
+}
+
+export async function redisHGet(config: RedisConfig, key: string, field: string): Promise<string | null> {
+  const result = await call(config, `/hget/${encodeURIComponent(key)}/${encodeURIComponent(field)}`);
+  return typeof result === "string" ? result : null;
+}
+
+/** HSET one field; the value travels as the request body, which Upstash appends as the last argument. */
+export async function redisHSet(config: RedisConfig, key: string, field: string, value: string): Promise<void> {
+  await call(config, `/hset/${encodeURIComponent(key)}/${encodeURIComponent(field)}`, value);
+}
+
+export async function redisHDel(config: RedisConfig, key: string, field: string): Promise<void> {
+  await call(config, `/hdel/${encodeURIComponent(key)}/${encodeURIComponent(field)}`);
+}
