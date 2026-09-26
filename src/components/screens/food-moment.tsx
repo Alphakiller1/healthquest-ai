@@ -5,6 +5,8 @@ import type { MomentResult } from "@/app/now/actions";
 import { HQIcon, type HQIconName } from "@/components/hq/icon";
 import { HQButton, HQCallout, HQField } from "@/components/hq/primitives";
 import { compareLines, type NutrientRow } from "@/lib/moments/food";
+import { HQLayer } from "@/components/hq/layers";
+import type { DetailLevel } from "@/lib/experience/depth";
 import type { NutritionFood, NutritionSearchResult } from "@/lib/nutrition/types";
 import { WinCard, type SourceLine } from "./moments";
 
@@ -16,12 +18,14 @@ export function FoodMoment({
   search,
   complete,
   gentleFoodMode,
+  level = "standard",
 }: {
   situations: Situation[];
   sources: Record<string, SourceLine>;
   search: (query: string) => Promise<NutritionSearchResult>;
   complete: (input: { kind: "food" }) => Promise<MomentResult>;
   gentleFoodMode: boolean;
+  level?: DetailLevel;
 }) {
   const [situation, setSituation] = useState<string | null>(null);
   const [result, setResult] = useState<MomentResult | null>(null);
@@ -82,7 +86,7 @@ export function FoodMoment({
         </section>
       ) : null}
 
-      <Compare search={search} gentleFoodMode={gentleFoodMode} onDone={done} />
+      <Compare search={search} gentleFoodMode={gentleFoodMode} onDone={done} level={level} />
     </div>
   );
 }
@@ -165,10 +169,12 @@ function Compare({
   search,
   gentleFoodMode,
   onDone,
+  level,
 }: {
   search: (query: string) => Promise<NutritionSearchResult>;
   gentleFoodMode: boolean;
   onDone: () => void;
+  level: DetailLevel;
 }) {
   const [a, setA] = useState<NutritionFood | null>(null);
   const [b, setB] = useState<NutritionFood | null>(null);
@@ -203,25 +209,6 @@ function Compare({
       <Picker label="Second food" id="food-b" search={search} value={b} onPick={setB} />
       {a && b ? (
         <>
-          <table className="hq-compare">
-            <caption className="hq-sr-only">Nutrients per {a.servingLabel}</caption>
-            <thead>
-              <tr>
-                <th scope="col">Per {a.servingLabel.replace(/^per /, "")}</th>
-                <th scope="col">{names[0]}</th>
-                <th scope="col">{names[1]}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.key}>
-                  <th scope="row">{row.label}</th>
-                  <td>{fmt(row.a, row.unit)}</td>
-                  <td>{fmt(row.b, row.unit)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
           {lines.length > 0 ? (
             <ul className="hq-answer__steps">
               {lines.map((line) => (
@@ -231,6 +218,27 @@ function Compare({
           ) : (
             <p className="hq-secondary" style={{ margin: 0 }}>These two are close on the numbers shown.</p>
           )}
+          <HQLayer depth={3} level={level} label="See all the numbers" hint={`Per ${a.servingLabel.replace(/^per /, "")}, from USDA`}>
+            <table className="hq-compare">
+              <caption className="hq-sr-only">Nutrients per {a.servingLabel}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Per {a.servingLabel.replace(/^per /, "")}</th>
+                  <th scope="col">{names[0]}</th>
+                  <th scope="col">{names[1]}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.key}>
+                    <th scope="row">{row.label}</th>
+                    <td>{fmt(row.a, row.unit)}</td>
+                    <td>{fmt(row.b, row.unit)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </HQLayer>
           <p className="hq-micro" style={{ margin: 0 }}>
             Labels list nutrients per serving, which can differ from this. What fits you depends on more than one number.
           </p>

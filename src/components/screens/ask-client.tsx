@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { AskResult } from "@/app/ask/actions";
+import type { DetailLevel } from "@/lib/experience/depth";
 import { HQAssistantResponse } from "@/components/hq/assistant-response";
 import { HQIcon } from "@/components/hq/icon";
 import { HQCallout, HQChip, HQLoader, HQSafetyBanner } from "@/components/hq/primitives";
@@ -23,6 +24,7 @@ export function AskClient({
   aiEnabled,
   savingConversations,
   prompts,
+  level,
 }: {
   ask: (formData: FormData) => Promise<AskResult>;
   aiConfigured: boolean;
@@ -30,6 +32,8 @@ export function AskClient({
   savingConversations: boolean;
   /** Suggested questions, led by the person's own profile topics. */
   prompts: string[];
+  /** Which answer layers start open. */
+  level: DetailLevel;
 }) {
   const [thread, setThread] = useState<AskResult[]>([]);
   const [draft, setDraft] = useState("");
@@ -104,7 +108,7 @@ export function AskClient({
 
       <div className="hq-stack" style={{ gap: 32 }} aria-live="polite">
         {thread.map((item) => (
-          <ThreadItem key={item.id} item={item} />
+          <ThreadItem key={item.id} item={item} level={level} />
         ))}
         {pendingQuestion ? (
           <div className="hq-answer__question" aria-busy="true">
@@ -164,7 +168,7 @@ export function AskClient({
   );
 }
 
-function ThreadItem({ item }: { item: AskResult }) {
+function ThreadItem({ item, level }: { item: AskResult; level: DetailLevel }) {
   if (item.kind === "invalid") {
     return <HQCallout tone="caution">{item.message}</HQCallout>;
   }
@@ -189,7 +193,7 @@ function ThreadItem({ item }: { item: AskResult }) {
   }
   return (
     <div className="hq-stack" style={{ gap: 12 }}>
-      <HQAssistantResponse question={item.question} response={item.response} />
+      <HQAssistantResponse question={item.question} response={item.response} level={level} />
       <span>
         <HQChip tone={item.madeBy === "ai" ? "info" : "brand"} icon={item.madeBy === "ai" ? "spark" : "book"}>
           {item.madeBy === "ai" ? "Written by AI from reviewed sources" : "Built from reviewed sources"}

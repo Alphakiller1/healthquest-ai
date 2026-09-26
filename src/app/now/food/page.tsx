@@ -6,6 +6,7 @@ import { requireOnboardedUser } from "@/lib/demo/current-user";
 import { shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
 import { FOOD_SITUATIONS, foodTips } from "@/lib/moments/food";
 import { momentSources } from "@/lib/moments/sources";
+import { experienceFor } from "@/lib/experience/current";
 import { searchFoods } from "../../journal/actions";
 import { completeMoment } from "../actions";
 
@@ -34,6 +35,7 @@ export default async function NowFoodPage() {
           sources={momentSources().sources}
           search={searchFoods}
           complete={completeMoment}
+          level={(await experienceFor(user)).level}
           gentleFoodMode={user.gentleFoodMode || shouldRecommendGentleFoodMode(user.healthContextIds ?? [])}
         />
       </div>

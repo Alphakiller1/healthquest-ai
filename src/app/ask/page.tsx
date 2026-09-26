@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AskClient } from "@/components/screens/ask-client";
 import { requireOnboardedUser } from "@/lib/demo/current-user";
 import { suggestedQuestions } from "@/lib/profile/personalize";
+import { experienceFor } from "@/lib/experience/current";
 import { askQuestion } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function AskPage() {
         aiEnabled={user.aiEnabled !== false}
         savingConversations={user.saveAiConversations === true}
         prompts={suggestedQuestions(user)}
+        level={(await experienceFor(user)).level}
       />
     </main>
   );

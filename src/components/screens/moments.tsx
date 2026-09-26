@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import type { MomentResult } from "@/app/now/actions";
 import { HQIcon } from "@/components/hq/icon";
 import { HQButton, HQCallout, HQSafetyBanner } from "@/components/hq/primitives";
+import { HQLayer } from "@/components/hq/layers";
+import type { DetailLevel } from "@/lib/experience/depth";
 import { BREATH, CALM_TOOLS, FEELINGS, GROUNDING_STEPS, toolsFor, type CalmTool, type Feeling } from "@/lib/moments/calm";
 import { ENERGY, MINUTES, MOVE_SAFETY, PLACES, pickMoves, type Energy, type MoveOption, type Place } from "@/lib/moments/movement";
 
@@ -92,9 +94,12 @@ export function MoveFlow({
   initialMinutes,
   claimSources,
   sources,
+  level = "standard",
 }: {
   complete: Complete;
   initialMinutes?: number;
+  /** Simple shows the single best fit first, with the rest one tap away. */
+  level?: DetailLevel;
   /** claim id → source id, so each option can show what it rests on. */
   claimSources: Record<string, string>;
   sources: Record<string, SourceLine>;
@@ -190,6 +195,15 @@ export function MoveFlow({
         </h2>
         {options.length === 0 ? (
           <HQCallout tone="neutral">Nothing fits that combination yet. Try a few more minutes or another place.</HQCallout>
+        ) : level === "simple" && options.length > 1 ? (
+          <>
+            <MoveOptionButton option={options[0]} onPick={start} />
+            <HQLayer depth={2} level={level} label={`More options (${options.length - 1})`}>
+              {options.slice(1).map((option) => (
+                <MoveOptionButton key={option.id} option={option} onPick={start} />
+              ))}
+            </HQLayer>
+          </>
         ) : (
           options.map((option) => (
             <button key={option.id} type="button" className="hq-move-option" onClick={() => start(option)}>
@@ -204,6 +218,19 @@ export function MoveFlow({
         )}
       </section>
     </div>
+  );
+}
+
+function MoveOptionButton({ option, onPick }: { option: MoveOption; onPick: (option: MoveOption) => void }) {
+  return (
+    <button type="button" className="hq-move-option" onClick={() => onPick(option)}>
+      <span className="hq-move-option__name">{option.name}</span>
+      <span className="hq-micro">
+        {option.intensity === "easy" ? "Easy pace" : "A bit more effort"}
+        {option.strength ? " · builds strength" : ""}
+      </span>
+      <HQIcon name="arrow-right" size={18} />
+    </button>
   );
 }
 

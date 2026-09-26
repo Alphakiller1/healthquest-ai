@@ -52,6 +52,10 @@ export default async function VisitPage({
           <p className="hq-secondary">
             Write questions for your next appointment. HealthQuest keeps the list; your clinician answers them.
           </p>
+          <details className="hq-about">
+            <summary>What is this?</summary>
+            <p>A list of questions to bring to your clinician. HealthQuest keeps the list and can print it; it doesn&rsquo;t answer the questions as medical advice.</p>
+          </details>
         </header>
 
         {params.emergency === "medical" ? (

@@ -49,7 +49,10 @@ test("adult can onboard, log, learn, export, see an emergency screen, and delete
   await page.getByRole("radio", { name: "The serving size listed" }).check();
   await page.getByRole("button", { name: "Save lesson" }).click();
   await expect(page.getByText("Quiz recorded")).toBeVisible();
-  await expect(page.getByRole("link", { name: /FDA/ })).toBeVisible();
+  // Sources sit one layer down unless the detail level opens them; either way they are one tap away.
+  const fdaLink = page.getByRole("link", { name: /FDA/ });
+  if (!(await fdaLink.isVisible())) await page.getByText(/^Sources \(\d+\)/).click();
+  await expect(fdaLink).toBeVisible();
 
   await page.goto("/quests");
   await expect(page.getByText("Completed this week").first()).toBeVisible();

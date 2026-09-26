@@ -8,6 +8,7 @@ import { XP_VALUES, totalXp } from "@/lib/gamification/xp";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { rankLessons, rankQuests, weeklyReflection, type RankedLesson, type RankedQuest } from "@/lib/profile/personalize";
 import { dailyTip, momentForHour, type DayMoment } from "@/lib/moments/daily";
+import { detailLevelFor, nextLevelNote, usageSignals, type DetailLevel } from "@/lib/experience/depth";
 import { getActiveSource } from "@/lib/evidence/registry";
 
 /*
@@ -120,6 +121,9 @@ export type TodayModel = {
   tip: { text: string; organization: string; url: string } | null;
   /** A small optional moment that fits the time of day. */
   moment: DayMoment;
+  /** Which layers start open, and a note on how detail grows when it's automatic. */
+  detail: DetailLevel;
+  detailNote: string | null;
 };
 
 function greetingFor(hour: number) {
@@ -322,6 +326,10 @@ export function buildToday(store: DemoStore, user: DemoUser, now = new Date()): 
       return claim && source ? { text: claim.claim, organization: source.organization, url: source.url } : null;
     })(),
     moment: momentForHour(hour),
+    ...(() => {
+      const detail = detailLevelFor(user, usageSignals(store, user));
+      return { detail, detailNote: nextLevelNote(detail, !user.detailLevel || user.detailLevel === "auto") };
+    })(),
     firstName: firstNameFromEmail(user.email),
     greeting: greetingFor(hour),
     dateLabel: new Intl.DateTimeFormat("en-US", {

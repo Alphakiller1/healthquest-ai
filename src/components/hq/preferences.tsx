@@ -4,8 +4,9 @@ import { useEffect, useState, type CSSProperties } from "react";
 
 type Theme = "system" | "light" | "dark";
 type Motion = "system" | "reduce";
+type TextSize = "system" | "large" | "larger";
 
-const KEYS = { theme: "hq-theme", motion: "hq-motion" } as const;
+const KEYS = { theme: "hq-theme", motion: "hq-motion", text: "hq-text" } as const;
 
 function read(key: string): string | null {
   try {
@@ -24,14 +25,14 @@ function write(key: string, value: string) {
   }
 }
 
-function apply(attribute: "theme" | "motion", value: string) {
+function apply(attribute: "theme" | "motion" | "text", value: string) {
   const root = document.documentElement;
   if (value === "system") delete root.dataset[attribute];
   else root.dataset[attribute] = value;
 }
 
 /** Runs before paint (inlined in the root layout) so a saved theme never flashes. */
-export const PREFERENCES_BOOT_SCRIPT = `(function(){try{var d=document.documentElement,s=localStorage;var t=s.getItem("${KEYS.theme}");if(t)d.dataset.theme=t;var m=s.getItem("${KEYS.motion}");if(m)d.dataset.motion=m;}catch(e){}})();`;
+export const PREFERENCES_BOOT_SCRIPT = `(function(){try{var d=document.documentElement,s=localStorage;var t=s.getItem("${KEYS.theme}");if(t)d.dataset.theme=t;var m=s.getItem("${KEYS.motion}");if(m)d.dataset.motion=m;var x=s.getItem("${KEYS.text}");if(x)d.dataset.text=x;}catch(e){}})();`;
 
 function Segmented<T extends string>({
   legend,
@@ -69,10 +70,11 @@ function Segmented<T extends string>({
   );
 }
 
-/** Theme and motion, stored per device. Contrast is an account setting (Settings). */
+/** Text size, theme, and motion, stored per device. Contrast is an account setting (Settings). */
 export function HQPreferenceControls() {
   const [theme, setTheme] = useState<Theme>("system");
   const [motion, setMotion] = useState<Motion>("system");
+  const [text, setText] = useState<TextSize>("system");
 
   useEffect(() => {
     // Hydrate from what the boot script already applied.
@@ -80,11 +82,26 @@ export function HQPreferenceControls() {
     /* eslint-disable react-hooks/set-state-in-effect */
     setTheme((root.theme as Theme) ?? (read(KEYS.theme) as Theme) ?? "system");
     setMotion((root.motion as Motion) ?? "system");
+    setText((root.text as TextSize) ?? "system");
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   return (
     <div className="hq-stack" style={{ "--hq-stack-gap": "20px" } as CSSProperties}>
+      <Segmented
+        legend="Text size"
+        value={text}
+        options={[
+          { value: "system", label: "Standard" },
+          { value: "large", label: "Large" },
+          { value: "larger", label: "Larger" },
+        ]}
+        onChange={(value) => {
+          setText(value);
+          apply("text", value);
+          write(KEYS.text, value);
+        }}
+      />
       <Segmented
         legend="Theme"
         value={theme}
@@ -113,5 +130,41 @@ export function HQPreferenceControls() {
         }}
       />
     </div>
+  );
+}
+
+const TEXT_STEPS: { value: TextSize; label: string }[] = [
+  { value: "system", label: "Standard" },
+  { value: "large", label: "Large" },
+  { value: "larger", label: "Larger" },
+];
+
+/**
+ * "Aa" in every header: one tap makes text bigger, on any screen, before
+ * sign-in too. Cycles Standard → Large → Larger → Standard.
+ */
+export function HQTextSizeButton() {
+  const [text, setText] = useState<TextSize>("system");
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setText((document.documentElement.dataset.text as TextSize) ?? "system");
+  }, []);
+  const index = TEXT_STEPS.findIndex((step) => step.value === text);
+  const next = TEXT_STEPS[(index + 1) % TEXT_STEPS.length];
+  return (
+    <button
+      type="button"
+      className="hq-icon-btn hq-text-size"
+      aria-label={`Text size: ${TEXT_STEPS[index]?.label ?? "Standard"}. Change to ${next.label}.`}
+      onClick={() => {
+        setText(next.value);
+        apply("text", next.value);
+        write(KEYS.text, next.value);
+      }}
+    >
+      <span aria-hidden>
+        A<span style={{ fontSize: "1.25em" }}>a</span>
+      </span>
+    </button>
   );
 }

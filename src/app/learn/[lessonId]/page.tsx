@@ -9,6 +9,8 @@ import { getDemoStore } from "@/lib/demo/store";
 import { getActiveSource } from "@/lib/evidence/registry";
 import { XP_VALUES } from "@/lib/gamification/xp";
 import { getLesson } from "@/lib/learn/lessons";
+import { experienceFor } from "@/lib/experience/current";
+import { HQLayer } from "@/components/hq/layers";
 import { rankLessons } from "@/lib/profile/personalize";
 import { submitLesson } from "../actions";
 
@@ -35,6 +37,8 @@ export default async function LessonPage({
   const next = query.result === "correct" ? rankLessons(user, done).find((item) => !item.done && item.lesson.id !== lesson.id) : undefined;
   const sources = lesson.sourceIds.map((id) => getActiveSource(id)).filter((source): source is NonNullable<typeof source> => Boolean(source));
 
+  const { level: detail } = await experienceFor(user);
+  const takeawayFirst = user.plainLanguage || detail === "simple";
   const takeaway = (
     <aside className="hq-takeaway" aria-label="Key takeaway">
       <p className="hq-label" style={{ color: "var(--hq-sun-ink)", marginBottom: 6 }}>
@@ -68,19 +72,25 @@ export default async function LessonPage({
           </p>
         </header>
 
-        {user.plainLanguage ? takeaway : null}
+        {takeawayFirst ? takeaway : null}
 
-        <div className="hq-reader__body hq-reading">
-          <p>{lesson.body}</p>
-        </div>
+        {/* Simple: the takeaway leads and the full reading is one tap away. */}
+        {detail === "simple" ? (
+          <HQLayer depth={2} level={detail} label={`Read the full lesson (${lesson.minutes} min)`} hint="The explanation behind the takeaway">
+            <div className="hq-reader__body hq-reading">
+              <p>{lesson.body}</p>
+            </div>
+          </HQLayer>
+        ) : (
+          <div className="hq-reader__body hq-reading">
+            <p>{lesson.body}</p>
+          </div>
+        )}
 
-        {user.plainLanguage ? null : takeaway}
+        {takeawayFirst ? null : takeaway}
 
         {sources.length > 0 ? (
-          <section className="hq-stack" style={{ gap: 8 }} aria-labelledby="sources-title">
-            <h2 id="sources-title" className="hq-label" style={{ margin: 0 }}>
-              Sources
-            </h2>
+          <HQLayer depth={3} level={detail} label={`Sources (${sources.length})`} hint="Where this lesson comes from">
             <ol className="hq-sources">
               {sources.map((source) => (
                 <li key={source.id} className="hq-source">
@@ -90,7 +100,7 @@ export default async function LessonPage({
                 </li>
               ))}
             </ol>
-          </section>
+          </HQLayer>
         ) : null}
 
         {query.result === "correct" ? (

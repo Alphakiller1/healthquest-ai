@@ -5,6 +5,9 @@ import { requireOnboardedUser } from "@/lib/demo/current-user";
 import { getDemoStore, withPersist } from "@/lib/demo/store";
 import { shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
 import { GOAL_OPTIONS } from "@/lib/journey/onboarding";
+import { DETAIL_LEVELS } from "@/lib/experience/depth";
+
+const DETAIL_IDS = new Set<string>(DETAIL_LEVELS.map((option) => option.id));
 import { redirect } from "next/navigation";
 
 async function updatePreferencesAction(formData: FormData) {
@@ -23,6 +26,7 @@ async function updatePreferencesAction(formData: FormData) {
     plainLanguage: formData.get("plainLanguage") === "on",
     highContrast: formData.get("highContrast") === "on",
     saveAiConversations: formData.get("saveAiConversations") === "on",
+    detailLevel: DETAIL_IDS.has(String(formData.get("detailLevel"))) ? (String(formData.get("detailLevel")) as NonNullable<typeof user.detailLevel>) : user.detailLevel,
   });
   if (formData.get("saveAiConversations") !== "on") {
     (await getDemoStore()).clearConversations(user.id);

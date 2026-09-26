@@ -7,6 +7,8 @@ import { getDemoStore } from "@/lib/demo/store";
 import { XP_VALUES } from "@/lib/gamification/xp";
 import { resolveCoachingMode } from "@/lib/health/contexts";
 import { rankLessons } from "@/lib/profile/personalize";
+import { experienceFor } from "@/lib/experience/current";
+import { HQLayer } from "@/components/hq/layers";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,9 @@ export default async function LearnPage() {
   const user = await requireOnboardedUser();
   const done = new Set((await getDemoStore()).listLessonCompletions(user.id).map((item) => item.lessonId));
   const ranked = rankLessons(user, done);
-  const picks = ranked.filter((item) => !item.done && item.reason).slice(0, 2);
+  const { level: detail } = await experienceFor(user);
+  // Simple: one pick and the rest one tap away. Otherwise two picks and the full list.
+  const picks = ranked.filter((item) => !item.done && item.reason).slice(0, detail === "simple" ? 1 : 2);
   const pickIds = new Set(picks.map((item) => item.lesson.id));
   const finished = ranked.filter((item) => item.done).length;
   const educationOnly = resolveCoachingMode(user.healthContextIds ?? []) === "education_only";
@@ -32,6 +36,10 @@ export default async function LearnPage() {
           <p className="hq-secondary">
             Short readings from reviewed public-health sources. Each ends with one question.
           </p>
+          <details className="hq-about">
+            <summary>What is this?</summary>
+            <p>Short readings from reviewed public-health sources, each ending with one question. The ones at the top are picked from your health profile.</p>
+          </details>
         </header>
 
         <section className="hq-stack" style={{ gap: 10 }} aria-labelledby="progress-title">
@@ -69,17 +77,18 @@ export default async function LearnPage() {
           </section>
         ) : null}
 
-        <section className="hq-section" aria-labelledby="all-title">
-          <div className="hq-section__head">
-            <h2 id="all-title" className="hq-section-title">
-              {picks.length > 0 ? "Everything else" : "All lessons"}
-            </h2>
-          </div>
+        <section className="hq-section" aria-label="All lessons">
           {educationOnly ? (
             <p className="hq-micro" style={{ margin: 0 }}>
               Because of a topic you chose, you see general lessons only.
             </p>
           ) : null}
+          <HQLayer
+            depth={2}
+            level={detail}
+            label={`${picks.length > 0 ? "More lessons" : "All lessons"} (${ranked.length - picks.length})`}
+            hint="Everything HealthQuest has reviewed"
+          >
           <ul className="hq-lesson-list">
             {ranked
               .filter((item) => !pickIds.has(item.lesson.id))
@@ -92,6 +101,7 @@ export default async function LearnPage() {
                 </li>
               ))}
           </ul>
+          </HQLayer>
         </section>
       </div>
     </main>

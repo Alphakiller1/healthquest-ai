@@ -5,6 +5,7 @@ import { HQButton, HQCallout, HQChoice, HQField, HQSection } from "@/components/
 import { requireOnboardedUser } from "@/lib/demo/current-user";
 import { getDemoStore } from "@/lib/demo/store";
 import { shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
+import { DETAIL_LEVELS } from "@/lib/experience/depth";
 import { clearSavedConversations, deleteAccount, signOut, updatePreferences } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +69,24 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             />
           </HQSection>
 
-          <HQSection title="Reading and display" id="display">
+          <HQSection title="How much detail?" id="display">
+            <p className="hq-micro" style={{ margin: 0 }}>
+              Every screen starts with the key point. This decides how much opens up beneath it — you can always tap to see more.
+            </p>
+            {DETAIL_LEVELS.map((option) => (
+              <HQChoice
+                key={option.id}
+                type="radio"
+                name="detailLevel"
+                value={option.id}
+                label={option.label}
+                hint={option.hint}
+                defaultChecked={(user.detailLevel ?? "auto") === option.id}
+              />
+            ))}
+          </HQSection>
+
+          <HQSection title="Reading and display" id="reading">
             <HQChoice
               name="plainLanguage"
               icon="book"

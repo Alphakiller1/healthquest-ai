@@ -5,6 +5,7 @@ import { getDemoStore } from "@/lib/demo/store";
 import { levelForXp } from "@/lib/gamification/levels";
 import { totalXp } from "@/lib/gamification/xp";
 import { HQBrand, HQSidebar, HQTabBar, HQTopBar } from "./nav";
+import { HQTextSizeButton } from "./preferences";
 import { HQChip, HQXp } from "./primitives";
 
 /**
@@ -29,6 +30,7 @@ export async function HQAppShell({ children }: { children: ReactNode }) {
           <HQBrand href="/" />
           <div className="hq-cluster">
             {testBadge}
+            <HQTextSizeButton />
             {session ? null : (
               <Link className="hq-btn hq-btn--quiet hq-btn--sm" href="/login">
                 Sign in
@@ -49,7 +51,10 @@ export async function HQAppShell({ children }: { children: ReactNode }) {
       <HQSidebar
         footer={
           <>
-          {testBadge}
+          <span className="hq-cluster" style={{ justifyContent: "space-between" }}>
+            {testBadge}
+            <HQTextSizeButton />
+          </span>
           <Link href="/you" className="hq-link-quiet hq-stack" style={{ gap: 2 }}>
             <HQXp value={xp} />
             <span className="hq-micro">
@@ -65,6 +70,7 @@ export async function HQAppShell({ children }: { children: ReactNode }) {
           trailing={
             <>
             {testBadge}
+            <HQTextSizeButton />
             <Link href="/you" className="hq-link-quiet" aria-label={`${xp} XP, ${level.name}. Open your profile.`} style={{ padding: "10px 4px" }}>
               <HQXp value={xp} />
             </Link>

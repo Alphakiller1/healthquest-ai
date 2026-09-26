@@ -11,6 +11,8 @@ import { HEALTH_CONTEXTS, resolveCoachingMode } from "@/lib/health/contexts";
 import { wellnessLog } from "@/lib/health/trends";
 import { ACTIVITY_BASELINES, EATING_PATTERNS, SLEEP_TYPICAL } from "@/lib/profile/profile";
 import { weeklyReflection } from "@/lib/profile/personalize";
+import { experienceFor } from "@/lib/experience/current";
+import { HQLayer } from "@/components/hq/layers";
 import { saveFamilyHistory } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,7 @@ export default async function HealthFactorsPage({ searchParams }: { searchParams
   const params = await searchParams;
   const store = await getDemoStore();
   const today = usCalendarDate(new Date().toISOString());
+  const { level: detail } = await experienceFor(user);
   const profile = user.profile ?? {};
   const week = weeklyReflection(store, user, today);
   const age = ageFrom(user.birthDate, today);
@@ -54,6 +57,10 @@ export default async function HealthFactorsPage({ searchParams }: { searchParams
             What shapes health, and what you&rsquo;ve logged. No risk estimate, no health score, no prediction — those need
             a clinician and a validated tool.
           </p>
+          <details className="hq-about">
+            <summary>What is this?</summary>
+            <p>Things that shape health — some you can influence, some you can&rsquo;t — next to what you&rsquo;ve logged. There is never a score or a risk number.</p>
+          </details>
         </header>
 
         <HQSection title="Things you can influence" id="influence">
@@ -154,7 +161,7 @@ export default async function HealthFactorsPage({ searchParams }: { searchParams
           </Link>
         </HQSection>
 
-        <HQSection title="The last 7 days" id="log">
+        <HQLayer depth={3} level={detail} label="The last 7 days" hint="Meals, movement, and sleep you logged">
           <p className="hq-micro" style={{ margin: 0 }}>
             Counts of what you entered. An empty day just means nothing was logged — it isn&rsquo;t a grade.
           </p>
@@ -174,7 +181,7 @@ export default async function HealthFactorsPage({ searchParams }: { searchParams
               </li>
             ))}
           </ul>
-        </HQSection>
+        </HQLayer>
 
         <p className="hq-micro" style={{ margin: 0 }}>
           Clinicians use validated tools, such as the ASCVD risk estimator, that need lab results and measurements.

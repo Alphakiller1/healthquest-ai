@@ -14,12 +14,10 @@
 .hq-today__log { order: 3; display: flex; flex-direction: column; gap: var(--hq-space-3); }
 .hq-today__rail { display: contents; }
 .hq-today__journey { order: 4; display: flex; flex-direction: column; gap: var(--hq-space-3); }
-.hq-today__moment { order: 5; }
-.hq-today__tip { order: 6; }
-.hq-today__learn { order: 7; }
-.hq-today__nudge:not(.hq-today__moment) { order: 8; }
-.hq-today__ask { order: 9; }
-.hq-today__win { order: 10; }
+.hq-today__rail > .hq-today__nudge { order: 5; }
+.hq-today__more { order: 6; }
+.hq-today__deeper { order: 7; }
+.hq-today__detail-note { order: 8; margin: 0; }
 .hq-today__fine { order: 11; margin: 0; padding-top: var(--hq-space-4); border-top: 1px solid var(--hq-line); }
 
 /* The next step: full-width action on phones, thumb-reachable, one per screen */

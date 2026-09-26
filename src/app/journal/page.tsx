@@ -7,6 +7,7 @@ import { JournalTabs, groupByDay } from "@/components/screens/journal-tabs";
 import { assistantDailyLimit } from "@/lib/ai/daily-limit";
 import { readSession } from "@/lib/demo/session";
 import { getDemoStore } from "@/lib/demo/store";
+import { experienceFor } from "@/lib/experience/current";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { CRISIS_MESSAGE, MEDICAL_EMERGENCY_MESSAGE } from "@/lib/safety/responses";
 import { deleteMeal } from "./actions";
@@ -49,6 +50,10 @@ export default async function JournalPage({
               ? "Education explanations are off. Meals still save."
               : `Log it in your own words. ${explanationsLeft} ${explanationsLeft === 1 ? "explanation" : "explanations"} left today.`}
           </p>
+          <details className="hq-about">
+            <summary>What is this?</summary>
+            <p>Log meals, movement, and rest in your own words. Nothing is graded — logging earns a few points for showing up.</p>
+          </details>
         </header>
 
         <JournalTabs current="/journal" />
@@ -93,6 +98,7 @@ export default async function JournalPage({
               <HQAssistantResponse
                 question={saved.foodName}
                 questionLabel="About your meal"
+                level={(await experienceFor(user)).level}
                 response={{
                   status: "ok",
                   summary: saved.explanation.summary,

@@ -83,3 +83,7 @@ A Now tab (replacing the Ask tab; Ask lives inside it) offers four quick tools. 
 All movement and coping guidance rests on new claims quoted closely from ODPHP's "Top 10 things to know" (a newly registered source, HTTP 200 on 2026-09-25) and NIMH's stress fact sheet; a test fails if any tool cites a claim that isn't active.
 
 Today gains a daily tip (stable for the day, drawn mostly from the profile's topics), a time-of-day moment, and a "Right now" row. Positive reinforcement comes from one reviewed copy library (`lib/moments/encouragement.ts`) — varied, calm, never shaming or about bodies — used after every save and moment. A finished moment earns 5 XP once per kind per day (so at most three a day), counts as showing up for the week, and unlocks a "Took a moment" mark.
+
+## 2026-09-25 — Layered depth and adaptive detail
+
+Screens now share one contract (eyebrow, question title, one purpose sentence, "What is this?", one primary action) and three depths — glance, guide, deep dive — rendered with `HQLayer` on native `<details>`. A detail level (Simple / Standard / Detailed) decides which layers start open; it grows automatically with use and can be set in Settings, and a closed layer is always one tap away. A header "Aa" control scales all text by 112.5% or 125%. Details in `docs/experience-architecture.md`.

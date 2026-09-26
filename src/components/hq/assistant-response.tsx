@@ -1,6 +1,8 @@
 import type { AssistantResponse } from "@/lib/ai/types";
 import { getActiveSource } from "@/lib/evidence/registry";
+import type { DetailLevel } from "@/lib/experience/depth";
 import { HQIcon } from "./icon";
+import { HQLayer } from "./layers";
 
 /**
  * The assistant answers as a short structured page, not a chat bubble:
@@ -12,6 +14,7 @@ export function HQAssistantResponse({
   response,
   sample,
   questionLabel,
+  level = "detailed",
 }: {
   question: string;
   /** Overrides the "You asked" label, e.g. for a meal explanation. */
@@ -19,6 +22,8 @@ export function HQAssistantResponse({
   response: AssistantResponse;
   /** Marks a design-time example so it is never mistaken for a live answer. */
   sample?: boolean;
+  /** Which layers start open. The plain answer and the disclaimer always show. */
+  level?: DetailLevel;
 }) {
   const sources = response.sourceIds
     .map((id) => getActiveSource(id))
@@ -37,6 +42,8 @@ export function HQAssistantResponse({
         <p className="hq-answer__lead">{response.summary}</p>
       </section>
 
+      {response.context || response.practicalOptions.length > 0 || response.uncertainty || response.professionalFollowup ? (
+        <HQLayer depth={2} level={level} label="Why it matters and what to try" hint="Context, options, and what this can't tell you">
       {response.context ? (
         <section className="hq-answer__part">
           <HQIcon name="compass" />
@@ -73,7 +80,11 @@ export function HQAssistantResponse({
         </section>
       ) : null}
 
+        </HQLayer>
+      ) : null}
+
       {sources.length > 0 ? (
+        <HQLayer depth={3} level={level} label={`Sources (${sources.length})`} hint="Where this comes from">
         <section className="hq-answer__part">
           <HQIcon name="book" />
           <h3>Sources</h3>
@@ -90,6 +101,7 @@ export function HQAssistantResponse({
             ))}
           </ol>
         </section>
+        </HQLayer>
       ) : null}
 
       <p className="hq-micro">{response.disclaimer}</p>

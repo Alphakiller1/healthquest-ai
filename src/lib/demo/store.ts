@@ -38,6 +38,8 @@ export type DemoUser = {
   skippedQuestIds?: string[];
   /** Optional answers that shape quests, lessons, and answers. See lib/profile/profile.ts. */
   profile?: HealthProfile;
+  /** How much detail screens show. "auto" (or unset) grows with use; see lib/experience/depth.ts. */
+  detailLevel?: "auto" | "simple" | "standard" | "detailed";
 };
 
 export type MealRecord = {

@@ -34,6 +34,10 @@ export default async function NowPage() {
           <p className="hq-label">Now</p>
           <h1 className="hq-onboard__question">What do you need right now?</h1>
           <p className="hq-secondary">Quick help for the moment you&rsquo;re in. Each one takes a minute or two.</p>
+          <details className="hq-about">
+            <summary>What is this?</summary>
+            <p>Quick tools for the moment you&rsquo;re in. Movement you finish is logged for you. Nothing you tap in Calm is saved, and nothing here is a diagnosis.</p>
+          </details>
         </header>
 
         <nav className="hq-now-grid" aria-label="Right now">

@@ -65,6 +65,10 @@ export function QuestsScreen({
           <p className="hq-secondary">
             Quests follow what you already do. Set any of them aside — there&rsquo;s no penalty.
           </p>
+          <details className="hq-about">
+            <summary>What is this?</summary>
+            <p>Small weekly goals sized by your health profile. Skip any without penalty; they reset every Monday.</p>
+          </details>
         </header>
 
         <div className="hq-stack" style={{ gap: 32 }}>

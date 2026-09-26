@@ -211,3 +211,7 @@
   --hq-text-secondary: var(--hq-text-primary);
   --hq-text-muted: var(--hq-text-secondary);
 }
+
+/* Text size: every size, space, and target is in rem, so the whole interface scales together. */
+:root[data-text="large"] { font-size: 112.5%; }
+:root[data-text="larger"] { font-size: 125%; }

@@ -3,6 +3,7 @@ import { REQUIRED_DISCLAIMER } from "@/lib/ai/types";
 import type { TodayModel } from "@/lib/today/today";
 import { HQToast } from "@/components/hq/feedback";
 import { HQGlyph, HQIcon } from "@/components/hq/icon";
+import { HQLayer } from "@/components/hq/layers";
 import { HQLessonFeature } from "@/components/hq/learning";
 import { HQButton, HQButtonLink, HQPath, HQXp, stepsToNodes } from "@/components/hq/primitives";
 import { encouragement } from "@/lib/moments/encouragement";
@@ -163,52 +164,7 @@ export function TodayScreen({
                 }`,
               }))}
             />
-            <ul className="hq-today__reflection">
-              {model.reflection.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-            <p className="hq-today__journey-foot hq-micro">
-              <Link href="/quests" className="hq-link-quiet">
-                {model.questsDoneThisWeek > 0
-                  ? `${model.questsDoneThisWeek} ${model.questsDoneThisWeek === 1 ? "quest" : "quests"} done · See quests`
-                  : "See this week's quests"}
-              </Link>
-              <Link href="/you" className="hq-link-quiet">
-                {model.level.name}
-                {model.level.next ? ` · ${model.level.next}` : ""}
-              </Link>
-            </p>
           </section>
-
-          <Link href={model.moment.href} className="hq-today__nudge hq-today__moment" style={{ borderStyle: "solid" }}>
-            <HQGlyph name={model.moment.id === "midday" ? "motion" : model.moment.id === "morning" ? "sun" : "moon"} tone="brand" />
-            <span>
-              <span className="hq-today__win-title">{model.moment.title}</span>
-              <span className="hq-micro" style={{ display: "block" }}>
-                {model.moment.body}
-              </span>
-            </span>
-            <HQIcon name="chevron-right" size={18} className="hq-tint-muted" />
-          </Link>
-
-          {model.tip ? (
-            <aside className="hq-takeaway hq-today__tip" aria-labelledby="tip-title">
-              <p id="tip-title" className="hq-label" style={{ color: "var(--hq-sun-ink)", marginBottom: 6 }}>
-                Today&rsquo;s tip
-              </p>
-              <p style={{ margin: 0 }}>{model.tip.text}</p>
-              <p className="hq-micro" style={{ margin: "6px 0 0" }}>
-                <a href={model.tip.url}>{model.tip.organization}</a>
-              </p>
-            </aside>
-          ) : null}
-
-          {model.lesson && !lessonIsFocus ? (
-            <div className="hq-today__learn">
-              <HQLessonFeature lesson={model.lesson} href={`/learn/${model.lesson.id}`} />
-            </div>
-          ) : null}
 
           {!model.profileSet ? (
             <Link href="/you/profile" className="hq-today__nudge">
@@ -223,26 +179,83 @@ export function TodayScreen({
             </Link>
           ) : null}
 
-          <Link className="hq-ask hq-today__ask" href="/ask">
-            <HQIcon name="compass" size={20} className="hq-tint-brand" />
-            <span className="hq-ask__text">Ask about food, habits, or a term</span>
-            <span className="hq-ask__go" aria-hidden>
-              <HQIcon name="arrow-right" size={18} />
-            </span>
-          </Link>
+          <div className="hq-today__more">
+            <HQLayer depth={2} level={model.detail} label="More for today" hint="Your week in words, a moment, a lesson, and Ask">
+              <ul className="hq-today__reflection">
+                {model.reflection.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
 
-          {model.recentWin ? (
-            <Link href="/you" className="hq-today__win hq-link-quiet">
-              <HQIcon name="spark" size={18} className="hq-xp__spark" />
-              <span>
-                <span className="hq-today__win-title">{model.recentWin.title}</span>
-                <span className="hq-micro" style={{ display: "block" }}>
-                  {model.recentWin.detail}
+              <Link href={model.moment.href} className="hq-today__nudge" style={{ borderStyle: "solid" }}>
+                <HQGlyph name={model.moment.id === "midday" ? "motion" : model.moment.id === "morning" ? "sun" : "moon"} tone="brand" />
+                <span>
+                  <span className="hq-today__win-title">{model.moment.title}</span>
+                  <span className="hq-micro" style={{ display: "block" }}>
+                    {model.moment.body}
+                  </span>
                 </span>
-              </span>
-            </Link>
-          ) : null}
+                <HQIcon name="chevron-right" size={18} className="hq-tint-muted" />
+              </Link>
+
+              {model.lesson && !lessonIsFocus ? <HQLessonFeature lesson={model.lesson} href={`/learn/${model.lesson.id}`} /> : null}
+
+              <Link className="hq-ask" href="/ask">
+                <HQIcon name="compass" size={20} className="hq-tint-brand" />
+                <span className="hq-ask__text">Ask about food, habits, or a term</span>
+                <span className="hq-ask__go" aria-hidden>
+                  <HQIcon name="arrow-right" size={18} />
+                </span>
+              </Link>
+            </HQLayer>
+          </div>
+
+          <div className="hq-today__deeper">
+            <HQLayer depth={3} level={model.detail} label="Tips, wins, and progress" hint="Today's tip, your latest mark, quests, and level">
+              {model.tip ? (
+                <aside className="hq-takeaway" aria-labelledby="tip-title">
+                  <p id="tip-title" className="hq-label" style={{ color: "var(--hq-sun-ink)", marginBottom: 6 }}>
+                    Today&rsquo;s tip
+                  </p>
+                  <p style={{ margin: 0 }}>{model.tip.text}</p>
+                  <p className="hq-micro" style={{ margin: "6px 0 0" }}>
+                    <a href={model.tip.url}>{model.tip.organization}</a>
+                  </p>
+                </aside>
+              ) : null}
+
+              {model.recentWin ? (
+                <Link href="/you" className="hq-today__win hq-link-quiet">
+                  <HQIcon name="spark" size={18} className="hq-xp__spark" />
+                  <span>
+                    <span className="hq-today__win-title">{model.recentWin.title}</span>
+                    <span className="hq-micro" style={{ display: "block" }}>
+                      {model.recentWin.detail}
+                    </span>
+                  </span>
+                </Link>
+              ) : null}
+
+              <p className="hq-today__journey-foot hq-micro">
+                <Link href="/quests" className="hq-link-quiet">
+                  {model.questsDoneThisWeek > 0
+                    ? `${model.questsDoneThisWeek} ${model.questsDoneThisWeek === 1 ? "quest" : "quests"} done · See quests`
+                    : "See this week's quests"}
+                </Link>
+                <Link href="/you" className="hq-link-quiet">
+                  {model.level.name}
+                  {model.level.next ? ` · ${model.level.next}` : ""}
+                </Link>
+              </p>
+            </HQLayer>
+          </div>
         </div>
+
+        {model.detailNote ? (
+          <p className="hq-today__detail-note hq-micro">
+            {model.detailNote} <Link href="/settings#display">Change detail level</Link>
+          </p>
+        ) : null}
 
         <p className="hq-today__fine hq-micro">{REQUIRED_DISCLAIMER}</p>
       </div>
