@@ -47,7 +47,7 @@ export function profileTopics(user: DemoUser): TopicWeight[] {
   return [...found.values()].sort((a, b) => b.weight - a.weight);
 }
 
-const LESSON_TOPICS: Record<string, string[]> = {
+export const LESSON_TOPICS: Record<string, string[]> = {
   cholesterol: ["cholesterol"],
   "saturated-fat": ["saturated fat", "cholesterol"],
   "food-labels": ["label"],

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { HQAssistantResponse } from "@/components/hq/assistant-response";
-import { HQGlyph } from "@/components/hq/icon";
+import Link from "next/link";
+import { HQGlyph, HQIcon } from "@/components/hq/icon";
 import { HQButton, HQCallout, HQChip, HQEmptyState, HQSafetyBanner } from "@/components/hq/primitives";
 import { JournalTabs, groupByDay } from "@/components/screens/journal-tabs";
 import { assistantDailyLimit } from "@/lib/ai/daily-limit";
@@ -10,8 +10,13 @@ import { getDemoStore } from "@/lib/demo/store";
 import { experienceFor } from "@/lib/experience/current";
 import { usCalendarDate } from "@/lib/health/calendar";
 import { CRISIS_MESSAGE, MEDICAL_EMERGENCY_MESSAGE } from "@/lib/safety/responses";
+import { shouldRecommendGentleFoodMode } from "@/lib/health/contexts";
+import { afterMeal, mealTip, usualMeals } from "@/lib/journey/meal-context";
+import { nutrientFocus } from "@/lib/nutrition/focus";
+import { profileTopics } from "@/lib/profile/personalize";
 import { deleteMeal } from "./actions";
 import { MealForm } from "./meal-form";
+import { MealInsight } from "./meal-insight";
 import { encouragement } from "@/lib/moments/encouragement";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +41,13 @@ export default async function JournalPage({
     0,
     assistantDailyLimit() - store.countAssistantUses(user.id, usCalendarDate(new Date().toISOString())),
   );
-  const recentFoods = [...new Set([...meals].reverse().map((meal) => meal.foodName.trim()))].slice(0, 6);
+  const today = usCalendarDate(new Date().toISOString());
+  const gentle = user.gentleFoodMode || shouldRecommendGentleFoodMode(user.healthContextIds ?? []);
+  const focus = nutrientFocus(profileTopics(user));
+  const level = (await experienceFor(user)).level;
+  const completed = new Set(store.listLessonCompletions(user.id).map((item) => item.lessonId));
+  const after = saved ? afterMeal(user, saved, focus, completed, gentle) : null;
+  const tip = saved ? null : mealTip(user, today);
   const days = groupByDay(meals, (meal) => usCalendarDate(meal.createdAt));
 
   return (
@@ -77,42 +88,60 @@ export default async function JournalPage({
         ) : null}
 
         <div className="hq-stack" style={{ gap: 24 }}>
-          {saved?.explanation ? (
-            <section className="hq-surface hq-surface--raised hq-stack" aria-labelledby="saved-title" style={{ gap: 20 }}>
-              <div className="hq-cluster" style={{ justifyContent: "space-between" }}>
-                <div>
-                  <h2 id="saved-title" className="hq-section-title" style={{ margin: 0 }}>
-                    Saved
+          {saved && after ? (
+            <section className="hq-meal-saved" aria-labelledby="saved-title">
+              <div className="hq-meal-saved__head">
+                <HQGlyph name="check" tone="brand" />
+                <div className="hq-meal-saved__text">
+                  <h2 id="saved-title" className="hq-meal-saved__title">
+                    Saved: {saved.foodName}
                   </h2>
-                  <p className="hq-secondary" style={{ margin: "2px 0 0" }}>
+                  <p className="hq-secondary" style={{ margin: 0 }}>
+                    {saved.mealSlot ? `${saved.mealSlot[0].toUpperCase()}${saved.mealSlot.slice(1)} · ` : ""}
                     {encouragement("meal", saved.id)}
                   </p>
                 </div>
-                <HQChip tone="sun" icon="spark">
-                  +5 XP for showing up
-                </HQChip>
+                <form action={deleteMeal}>
+                  <input type="hidden" name="mealId" value={saved.id} />
+                  <input type="hidden" name="undo" value="1" />
+                  <HQButton type="submit" variant="quiet" size="sm" aria-label={`Undo saving ${saved.foodName}`}>
+                    Undo
+                  </HQButton>
+                </form>
               </div>
-              {saved.explanation.demo ? (
-                <HQCallout tone="neutral">Practice explanation. This was not sent to a live model.</HQCallout>
+              <HQChip tone="sun" icon="spark">
+                +5 XP for showing up
+              </HQChip>
+              {after.focusLine ? (
+                <p className="hq-meal-saved__focus">
+                  <span className="hq-fact__focus-key">Your focus</span>
+                  <span>
+                    <strong>{after.focusLine}.</strong> <span className="hq-micro">{after.focusReason}</span>
+                  </span>
+                </p>
+              ) : after.focusNudge ? (
+                <p className="hq-micro" style={{ margin: 0 }}>{after.focusNudge}</p>
               ) : null}
-              <HQAssistantResponse
-                question={saved.foodName}
-                questionLabel="About your meal"
-                level={(await experienceFor(user)).level}
-                response={{
-                  status: "ok",
-                  summary: saved.explanation.summary,
-                  practicalOptions: saved.explanation.practicalOptions.slice(0, 1),
-                  sourceIds: saved.explanation.sourceIds,
-                  uncertainty: saved.explanation.uncertainty,
-                  professionalFollowup: saved.explanation.professionalFollowup,
-                  disclaimer: saved.explanation.disclaimer,
-                }}
-              />
-              <p className="hq-micro" style={{ margin: 0 }}>
-                The points are for logging, not a grade of the meal.
-              </p>
+              <div className="hq-meal-saved__next">
+                {user.aiEnabled !== false ? (
+                  <a href="#meal-insight" className="hq-meal-saved__link">
+                    <HQIcon name="spark" size={16} /> What this means for you
+                  </a>
+                ) : null}
+                {after.lesson ? (
+                  <Link href={`/learn/${after.lesson.id}`} className="hq-meal-saved__link">
+                    <HQIcon name="book" size={16} /> {after.lesson.title}
+                    <span className="hq-micro"> · {after.lesson.reason}</span>
+                  </Link>
+                ) : null}
+              </div>
             </section>
+          ) : null}
+
+          {params.notice === "undone" ? (
+            <p className="hq-meal-note" role="status">
+              <HQIcon name="check" size={16} /> Removed. Everything else is as it was.
+            </p>
           ) : null}
 
           {params.notice === "invalid" ? (
@@ -121,7 +150,23 @@ export default async function JournalPage({
             </div>
           ) : null}
 
-          <MealForm gentleFoodMode={user.gentleFoodMode} recentFoods={recentFoods} />
+          <MealForm key={`form-${saved?.id ?? "new"}`} gentleFoodMode={gentle} usual={usualMeals(meals)} focus={focus} />
+
+          {tip ? (
+            <aside className="hq-meal-tip" aria-labelledby="meal-tip-title">
+              <p id="meal-tip-title" className="hq-label" style={{ margin: 0 }}>
+                {focus.length > 0 ? "An idea for your focus" : "An idea for today"}
+              </p>
+              <p style={{ margin: 0 }}>{tip.text}</p>
+              <p className="hq-micro" style={{ margin: 0 }}>
+                <a href={tip.url}>{tip.organization}</a>
+              </p>
+            </aside>
+          ) : null}
+
+          {saved && user.aiEnabled !== false ? (
+            <MealInsight key={`insight-${saved.id}`} mealId={saved.id} foodName={saved.foodName} initial={saved.explanation} level={level} />
+          ) : null}
         </div>
 
         <section className="hq-log-history hq-section" aria-labelledby="recent-meals">
@@ -145,7 +190,14 @@ export default async function JournalPage({
                           <span>
                             <span className="hq-log-item__title">{meal.foodName}</span>
                             <span className="hq-micro" style={{ display: "block" }}>
-                              {[meal.quantity && `${meal.quantity} ${meal.servingUnit}`.trim(), meal.preparation, meal.approximateCost && `$${meal.approximateCost.replace(/^\$/, "")}`]
+                              {[
+                                meal.mealSlot && `${meal.mealSlot[0].toUpperCase()}${meal.mealSlot.slice(1)}`,
+                                meal.portion && `${meal.portion} portion`,
+                                meal.quantity && `${meal.quantity} ${meal.servingUnit}`.trim(),
+                                meal.preparation,
+                                meal.nutrition && "nutrition facts",
+                                meal.approximateCost && `$${meal.approximateCost.replace(/^\$/, "")}`,
+                              ]
                                 .filter(Boolean)
                                 .join(" · ") || "Logged"}
                             </span>

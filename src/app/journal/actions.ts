@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createAssistant } from "@/lib/ai/create-assistant";
 import { readSession } from "@/lib/demo/session";
 import { getDemoStore, withPersist } from "@/lib/demo/store";
-import { recordMeal } from "@/lib/journey/record-meal";
+import { explainMeal, recordMeal, type MealExplanation } from "@/lib/journey/record-meal";
 import { awardCompletedQuests } from "@/lib/gamification/quests";
 import { getNutritionProvider } from "@/lib/nutrition/provider";
 import type { NutritionSearchResult } from "@/lib/nutrition/types";
@@ -28,14 +28,23 @@ async function searchFoodsAction(query: string): Promise<NutritionSearchResult> 
 async function deleteMealAction(formData: FormData) {
   const user = await requireUser();
   (await getDemoStore()).deleteMeal(user.id, String(formData.get("mealId") ?? ""));
-  redirect("/journal");
+  redirect(formData.get("undo") ? "/journal?notice=undone" : "/journal");
+}
+
+/** Called by the saved-meal card after the page shows, so saving never waits on it. */
+async function explainMealAction(mealId: string): Promise<MealExplanation | null> {
+  const user = await requireUser();
+  const store = await getDemoStore();
+  const meal = store.listMeals(user.id).find((item) => item.id === mealId);
+  if (!meal) return null;
+  const assistant = createAssistant();
+  return explainMeal({ store, user, meal, assistant: assistant.provider, assistantDemo: assistant.demo });
 }
 
 async function saveMealAction(formData: FormData) {
   const user = await requireUser();
   // Nutrition matching is optional: a meal always saves, with or without USDA data.
   const nutrition = getNutritionProvider();
-  const assistant = createAssistant();
   const result = await recordMeal({
     store: (await getDemoStore()),
     user,
@@ -47,10 +56,10 @@ async function saveMealAction(formData: FormData) {
       approximateCost: String(formData.get("approximateCost") ?? ""),
       notes: String(formData.get("notes") ?? ""),
       fdcId: String(formData.get("fdcId") ?? "") || null,
+      mealSlot: String(formData.get("mealSlot") ?? ""),
+      portion: String(formData.get("portion") ?? ""),
     },
     nutrition: nutrition.ok ? nutrition.provider : null,
-    assistant: assistant.provider,
-    assistantDemo: assistant.demo,
   });
   if (result.status === "emergency") {
     redirect(`/journal?emergency=${result.actions.includes("call_988") ? "crisis" : "medical"}`);
@@ -63,6 +72,7 @@ async function saveMealAction(formData: FormData) {
   redirect("/journal?notice=invalid");
 }
 
-export const searchFoods = withPersist(searchFoodsAction);
+export const searchFoods = withPersist(searchFoodsAction, { refresh: false });
+export const explainMealNow = withPersist(explainMealAction, { refresh: false });
 export const deleteMeal = withPersist(deleteMealAction);
 export const saveMeal = withPersist(saveMealAction);

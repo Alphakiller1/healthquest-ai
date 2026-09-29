@@ -110,3 +110,15 @@ Every screen was checked on a production build at 320, 360, 390, and 844×390 (l
 ## 2026-09-26 — Registered USDA key in production
 
 `USDA_FOODDATA_API_KEY` in Vercel production now holds a registered api.data.gov key (3,600 requests an hour), replacing `DEMO_KEY`. Verified live: a food search on /now/food returns FoodData Central results.
+
+## 2026-09-28 — Meal logging: quick log, goal focus, and USDA ranking
+
+Logging a meal is now one field and one tap. The time of day (breakfast, lunch, dinner, snack) is pre-set from the person's clock. Portion is optional. Exact amount, preparation, cost, and notes sit under "More details". "Your usual" repeats a past meal in one tap, including its USDA match.
+
+Nutrition facts are offered while typing. The box says plainly that these are optional suggestions from the USDA database. Nothing is picked for the person, and once they pick one it reads "You picked this". The profile's health focus and goals decide which nutrients show first (`lib/nutrition/focus.ts`), marked "Your focus" with the person's own reason. These are facts only: an amount, never a verdict or a comparison to a limit. Gentle Food Mode never shows calories.
+
+Saving no longer waits for a model. The meal saves at once, with a snapshot of the matched facts. The saved card offers Undo, a goal line ("Sodium 4 mg per 100 g · USDA: Oats"), and a lesson about what was eaten, or else one picked by the profile. The explanation loads afterwards (`explainMealNow`), runs once per meal, and falls back to reviewed sources if the model fails. An idea for the person's focus shows on the empty form.
+
+USDA's own search order is poor for everyday words ("oatmeal" returned oatmeal bread and cookies, "apple" returned croissants). `lib/nutrition/rank.ts` now ranks a pool of 25 results. It prefers the food itself (raw, cooked, brewed) over things made from it, flavoured versions, baby food, powders, and brands. It also searches USDA's name for a few everyday words, so "oatmeal" also searches "oats cooked with water". The tests use real USDA names.
+
+Server actions called from a component (food lookup, the late explanation) use `withPersist(fn, { refresh: false })`, so the page does not re-render while someone types.

@@ -1,4 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { aliasFor, aliasQuery, rankUsdaMatches } from "./rank";
 import { dirname, resolve } from "node:path";
 import { dataDir } from "@/lib/demo/data-dir";
 import { DEMO_FOODS, searchDemoFoods } from "./catalog";
@@ -75,11 +76,13 @@ export function createUsdaNutritionProvider(apiKey: string): NutritionProvider {
   return {
     mode: "usda",
     async search(query: string): Promise<NutritionSearchResult> {
-      const searchOnce = async (foundationOnly: boolean): Promise<NutritionFood[] | NutritionSearchResult> => {
+      const alias = aliasFor(query);
+      const searchOnce = async (foundationOnly: boolean, text = query): Promise<NutritionFood[] | NutritionSearchResult> => {
         if (!allowRequest()) return { status: "unavailable", message: USDA_BUSY };
         const url = new URL("https://api.nal.usda.gov/fdc/v1/foods/search");
-        url.searchParams.set("query", query);
-        url.searchParams.set("pageSize", "5");
+        url.searchParams.set("query", text);
+        // A wide pool, because USDA's own order is poor; rankUsdaMatches picks the best.
+        url.searchParams.set("pageSize", "25");
         if (foundationOnly) url.searchParams.set("dataType", "Foundation,SR Legacy");
         url.searchParams.set("api_key", apiKey);
         const response = await fetch(url);
@@ -96,17 +99,18 @@ export function createUsdaNutritionProvider(apiKey: string): NutritionProvider {
           };
         }
         const json = (await response.json()) as { foods?: unknown[] };
-        return rankUsdaMatches(
-          query,
-          (json.foods ?? [])
-            .map((food) => mapUsdaFood(food))
-            .filter((food): food is NutritionFood => food !== null),
-        );
+        return (json.foods ?? []).map((food) => mapUsdaFood(food)).filter((food): food is NutritionFood => food !== null);
       };
       const first = await searchOnce(true);
       if (!Array.isArray(first)) return first;
-      const foods = first.length > 0 ? first : await searchOnce(false);
-      if (!Array.isArray(foods)) return foods;
+      const viaAlias = alias ? await searchOnce(true, aliasQuery(alias)) : [];
+      let foods = rankUsdaMatches(query, [...(Array.isArray(viaAlias) ? viaAlias : []), ...first], alias);
+      if (foods.length === 0) {
+        const everything = await searchOnce(false);
+        if (!Array.isArray(everything)) return everything;
+        foods = rankUsdaMatches(query, everything, alias);
+      }
+      foods = foods.slice(0, 8);
       if (foods.length === 0) {
         return {
           status: "uncertain",
@@ -152,21 +156,7 @@ function firstNutrient(list: unknown, ids: number[]): number | null {
   return null;
 }
 
-export function rankUsdaMatches(query: string, foods: NutritionFood[]): NutritionFood[] {
-  const terms = query
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((term) => term.length > 2);
-  if (terms.length === 0) return foods;
-  return foods
-    .map((food) => ({
-      food,
-      score: terms.filter((term) => food.description.toLowerCase().includes(term)).length,
-    }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .map((item) => item.food);
-}
+export { rankUsdaMatches } from "./rank";
 
 export function mapUsdaFood(value: unknown): NutritionFood | null {
 

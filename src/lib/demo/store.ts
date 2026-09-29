@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { NutritionFood } from "@/lib/nutrition/types";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -43,6 +44,15 @@ export type DemoUser = {
   detailLevel?: "auto" | "simple" | "standard" | "detailed";
 };
 
+export const MEAL_SLOTS = ["breakfast", "lunch", "dinner", "snack"] as const;
+export type MealSlot = (typeof MEAL_SLOTS)[number];
+export const MEAL_PORTIONS = ["small", "regular", "large"] as const;
+export type MealPortion = (typeof MEAL_PORTIONS)[number];
+export type MealNutrition = Pick<
+  NutritionFood,
+  "description" | "servingLabel" | "sourceDataset" | "calories" | "sodium" | "saturatedFat" | "fiber" | "carbohydrates" | "protein" | "sugars"
+>;
+
 export type MealRecord = {
   id: string;
   userId: string;
@@ -54,6 +64,12 @@ export type MealRecord = {
   notes: string;
   fdcId: string | null;
   nutritionDemo: boolean;
+  /** When in the day it was eaten. Older records have none. */
+  mealSlot?: MealSlot;
+  /** A rough size, when the person gave one. */
+  portion?: MealPortion;
+  /** The matched USDA facts as they were at save time (per servingLabel). */
+  nutrition?: MealNutrition | null;
   createdAt: string;
   explanation: {
     summary: string;
@@ -141,6 +157,7 @@ export type DemoStore = {
   addMeal(meal: MealRecord): void;
   listMeals(userId: string): MealRecord[];
   deleteMeal(userId: string, mealId: string): void;
+  setMealExplanation(userId: string, mealId: string, explanation: NonNullable<MealRecord["explanation"]>): void;
   addVisitQuestion(question: VisitQuestion): void;
   listVisitQuestions(userId: string): VisitQuestion[];
   deleteVisitQuestion(userId: string, questionId: string): void;
@@ -244,6 +261,13 @@ function createStore(load: () => Database, save: (db: Database) => void): DemoSt
     deleteMeal(userId, mealId) {
       const db = load();
       db.meals = db.meals.filter((meal) => !(meal.userId === userId && meal.id === mealId));
+      save(db);
+    },
+    setMealExplanation(userId, mealId, explanation) {
+      const db = load();
+      const meal = db.meals.find((item) => item.userId === userId && item.id === mealId);
+      if (!meal) return;
+      meal.explanation = explanation;
       save(db);
     },
     addVisitQuestion(question) {
@@ -539,6 +563,7 @@ export async function getDemoStore(): Promise<DemoStore> {
  */
 export function withPersist<Args extends unknown[], Result>(
   action: (...args: Args) => Promise<Result>,
+  options: { refresh?: boolean } = {},
 ): (...args: Args) => Promise<Result> {
   return async (...args: Args) => {
     const scope: { snapshot: Promise<Snapshot> | null } = { snapshot: null };
@@ -548,8 +573,10 @@ export function withPersist<Args extends unknown[], Result>(
       if (redisConfig() && scope.snapshot) await persist(await scope.snapshot);
       // The app shell (nav, XP) lives in the root layout, which Next keeps across
       // navigations. Refresh it so a finished onboarding shows the tabs and new XP shows at once.
+      // Actions called from a component (a lookup, a late explanation) pass refresh: false:
+      // re-rendering the whole page under the person while they type helps no one.
       try {
-        revalidatePath("/", "layout");
+        if (options.refresh !== false) revalidatePath("/", "layout");
       } catch {
         // Outside a Next request (unit tests) there is nothing to refresh.
       }

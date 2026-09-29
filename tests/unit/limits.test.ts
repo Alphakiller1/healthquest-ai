@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ASSISTANT_LIMIT_MESSAGE } from "@/lib/ai/daily-limit";
 import { runAssistantPipeline } from "@/lib/ai/pipeline";
 import { createMemoryStore, type DemoUser } from "@/lib/demo/store";
-import { recordMeal } from "@/lib/journey/record-meal";
+import { explainMeal, recordMeal } from "@/lib/journey/record-meal";
 import { consumeUsdaRequest, usdaHourlyLimit } from "@/lib/nutrition/rate-limit";
 import { createDemoNutritionProvider } from "@/lib/nutrition/provider";
 import { activeSourceIds } from "@/lib/evidence/registry";
@@ -40,6 +40,13 @@ describe("assistant daily limit", () => {
         fdcId: null,
       },
       nutrition: createDemoNutritionProvider(),
+    });
+    expect(result.status).toBe("saved");
+    if (result.status !== "saved") return;
+    const explanation = await explainMeal({
+      store,
+      user,
+      meal: result.meal,
       assistant: {
         async generate() {
           calls += 1;
@@ -48,8 +55,7 @@ describe("assistant daily limit", () => {
       },
       assistantDemo: true,
     });
-    expect(result.status).toBe("saved");
-    if (result.status === "saved") expect(result.explanation.summary).toBe(ASSISTANT_LIMIT_MESSAGE);
+    expect(explanation.summary).toBe(ASSISTANT_LIMIT_MESSAGE);
     expect(calls).toBe(0);
     expect(result.status === "saved" ? result.awarded : false).toBe(true);
     if (previous === undefined) delete process.env.AI_DAILY_LIMIT_FREE;

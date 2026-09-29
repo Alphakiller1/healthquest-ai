@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createMockAssistant } from "@/lib/ai/mock-provider";
 import { createMemoryStore, type DemoUser } from "@/lib/demo/store";
 import { completeOnboarding } from "@/lib/journey/onboarding";
-import { recordMeal } from "@/lib/journey/record-meal";
+import { explainMeal, recordMeal } from "@/lib/journey/record-meal";
 import { createDemoNutritionProvider } from "@/lib/nutrition/provider";
 import { mapUsdaFood, rankUsdaMatches } from "@/lib/nutrition/provider";
 import { selectNutritionMode } from "@/lib/nutrition/types";
@@ -65,7 +65,7 @@ describe("onboarding", () => {
 });
 
 describe("meal logging", () => {
-  it("matches sample foods, explains from the registry, and awards XP once", async () => {
+  it("saves at once with the matched facts, explains afterwards from the registry, and awards XP once", async () => {
     const store = createMemoryStore();
     const adult = { ...user, onboardingComplete: true, goals: ["understand_nutrition"] };
     store.saveUser(adult);
@@ -83,25 +83,43 @@ describe("meal logging", () => {
         approximateCost: "",
         notes: "",
         fdcId: "demo-ribeye",
+        mealSlot: "dinner",
+        portion: "large",
       },
       nutrition,
-      assistant: createMockAssistant(),
-      assistantDemo: true,
     });
     expect(saved.status).toBe("saved");
     if (saved.status !== "saved") return;
     expect(saved.awarded).toBe(true);
     expect(saved.totalXp).toBe(5);
-    expect(saved.explanation.demo).toBe(true);
-    expect(saved.explanation.sourceIds).toContain("nhlbi-blood-cholesterol");
-    expect(saved.explanation.summary.toLowerCase()).not.toContain("will lower");
-    const again = store.award({
+    expect(saved.meal.explanation).toBeNull();
+    expect(saved.meal.mealSlot).toBe("dinner");
+    expect(saved.meal.portion).toBe("large");
+    expect(saved.meal.nutrition?.saturatedFat).not.toBeNull();
+
+    const explanation = await explainMeal({ store, user: adult, meal: saved.meal, assistant: createMockAssistant(), assistantDemo: true });
+    expect(explanation.demo).toBe(true);
+    expect(explanation.sourceIds).toContain("nhlbi-blood-cholesterol");
+    expect(explanation.summary.toLowerCase()).not.toContain("will lower");
+    expect(store.listMeals(adult.id)[0].explanation?.summary).toBe(explanation.summary);
+    // Asked again (a reload, a second tab): the stored answer, no second model call.
+    let calls = 0;
+    const again = await explainMeal({
+      store,
+      user: adult,
+      meal: store.listMeals(adult.id)[0],
+      assistant: { async generate() { calls += 1; throw new Error("not expected"); } },
+      assistantDemo: false,
+    });
+    expect(again.summary).toBe(explanation.summary);
+    expect(calls).toBe(0);
+    const awardAgain = store.award({
       userId: adult.id,
       eventType: "meal_logged",
       sourceEntityId: saved.meal.id,
     });
-    expect(again.awarded).toBe(false);
-    expect(again.total).toBe(5);
+    expect(awardAgain.awarded).toBe(false);
+    expect(awardAgain.total).toBe(5);
   });
 
   it("does not guess when the food is unknown", async () => {
@@ -125,8 +143,6 @@ describe("meal logging", () => {
         fdcId: null,
       },
       nutrition: createDemoNutritionProvider(),
-      assistant: createMockAssistant(),
-      assistantDemo: true,
     });
     expect(result.status).toBe("emergency");
     expect(store.listMeals(user.id)).toHaveLength(0);

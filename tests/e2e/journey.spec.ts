@@ -31,16 +31,40 @@ test("adult can onboard, log, learn, export, see an emergency screen, and delete
   await expect(page.locator(".hq-tabbar").getByRole("link", { name: "Now" })).toBeVisible();
 
   await page.goto("/journal");
-  await page.getByRole("textbox", { name: "Food", exact: true }).fill("rolled oats");
-  await page.getByRole("button", { name: "Find nutrition match" }).click();
-  await expect(
-    page.getByText(/FoodData Central|Sample data, not USDA|nutrition service is busy|No confident nutrition match/).first(),
-  ).toBeVisible();
+  const foodBox = page.getByRole("textbox", { name: "Food", exact: true });
+  const save = page.getByRole("button", { name: /^Save (breakfast|lunch|dinner|snack|meal)$/ });
+  // Time of day is pre-set from the clock; exactly one is chosen.
+  await expect(page.locator('input[name="mealSlot"]:checked')).toHaveCount(1);
+  // Nutrition facts are offered while typing, clearly as optional suggestions, and never picked for you.
+  await foodBox.fill("oatmeal");
+  await expect(page.getByText(/Add nutrition facts\? Optional|No close match|resting right now/).first()).toBeVisible({
+    timeout: 20_000,
+  });
+  const useThis = page.getByRole("button", { name: /Use this/ });
+  if ((await useThis.count()) > 0) {
+    await expect(page.getByText("You picked this")).toHaveCount(0);
+    await useThis.first().click();
+    await expect(page.getByText(/You picked this/)).toBeVisible();
+  }
+  await page.getByRole("button", { name: "Regular", exact: true }).click();
+  await save.click();
+  await expect(page.getByRole("heading", { name: /Saved: oatmeal/ })).toBeVisible();
+  // The explanation arrives after the save, in its own section.
+  await expect(page.getByRole("heading", { name: "What this means for you" })).toBeVisible();
+  await expect(page.getByText("About your meal")).toBeVisible({ timeout: 20_000 });
 
-  await page.getByRole("textbox", { name: "Food", exact: true }).fill("beans");
+  // Your usual: one tap refills it; Undo takes a save back.
+  await page.getByRole("button", { name: "oatmeal", exact: true }).click();
+  await expect(page.getByText(/Filled in from last time/)).toBeVisible();
+  await save.click();
+  await page.getByRole("button", { name: /Undo saving oatmeal/ }).click();
+  await expect(page.getByText(/Removed\./)).toBeVisible();
+
+  await foodBox.fill("beans");
+  await page.getByText(/More details/).click();
   await page.getByLabel("Approximate cost, optional").fill("2");
-  await page.getByRole("button", { name: "Save meal" }).click();
-  await expect(page.getByRole("heading", { name: "Saved" })).toBeVisible();
+  await save.click();
+  await expect(page.getByRole("heading", { name: /Saved: beans/ })).toBeVisible();
 
   await page.goto("/move");
   await page.getByLabel("Activity").fill("walk");
@@ -83,7 +107,7 @@ test("adult can onboard, log, learn, export, see an emergency screen, and delete
 
   await page.goto("/journal");
   await page.getByRole("textbox", { name: "Food", exact: true }).fill("I can't breathe");
-  await page.getByRole("button", { name: "Save meal" }).click();
+  await page.getByRole("button", { name: /^Save (breakfast|lunch|dinner|snack|meal)$/ }).click();
   await expect(page.getByRole("link", { name: "Call 911" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Saved" })).toHaveCount(0);
 
